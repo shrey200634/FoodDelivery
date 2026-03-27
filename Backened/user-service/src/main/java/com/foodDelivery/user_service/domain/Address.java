@@ -23,7 +23,7 @@ public class Address {
     private User user;
 
     @Column(nullable = false, length = 50)
-    private String label1 ;   // homee / office/others
+    private String label ;   // homee / office/others
 
     @Column(nullable = false)
     private  String street ;
@@ -32,7 +32,7 @@ public class Address {
     private String city ;
 
     @Column(nullable = false, length = 10)
-    private String pincpde ;
+    private String pincode ;
 
     @Column (nullable = false, precision = 10, scale = 8)
     private BigDecimal latitude ;
