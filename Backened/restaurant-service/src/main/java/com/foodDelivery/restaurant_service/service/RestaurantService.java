@@ -75,6 +75,13 @@ public class RestaurantService {
                 .toList();
     }
 
+    //search for the restaurant
+    public List<RestaurantResponse> search(String keyword){
+        return restaurantRepository.searchByKeyword(keyword).stream()
+                .map(RestaurantResponse::fromEntity)
+                .toList();
+    }
+
 
 
 }
