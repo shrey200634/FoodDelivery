@@ -2,10 +2,7 @@ package com.foodDelivery.order_service.service;
 
 import com.foodDelivery.order_service.domain.Order;
 import com.foodDelivery.order_service.domain.OrderItem;
-import com.foodDelivery.order_service.dto.CartResponse;
-import com.foodDelivery.order_service.dto.OrderPlacedEvent;
-import com.foodDelivery.order_service.dto.OrderResponse;
-import com.foodDelivery.order_service.dto.PlaceOrderRequest;
+import com.foodDelivery.order_service.dto.*;
 import com.foodDelivery.order_service.kafka.OrderEventProducer;
 import com.foodDelivery.order_service.repository.OrderRepo;
 import jakarta.transaction.Transactional;
@@ -92,6 +89,84 @@ public class OrderService {
 
         return OrderResponse.fromEntity(savedOrder);
 
+    }
+
+    // get order by ordeerId
+
+    public OrderResponse gwtOrder(String orderId ){
+
+        Order order =getOrderEntity(orderId);
+        return OrderResponse.fromEntity(order);
+    }
+
+
+    //get my order (userhistory )
+    public List<OrderResponse> getMyOrder(String userId){
+        return orderRepo.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(OrderResponse::fromEntity)
+                .toList();
+    }
+
+    //get order for the restaurant
+
+    public List<OrderResponse> getRestaurantOwner(String resId){
+        return orderRepo.findByRestaurantIdOrderByCreatedAtDesc(resId).stream()
+                .map(OrderResponse::fromEntity)
+                .toList();
+    }
+
+    //get active order for thew restaurant
+    public List<OrderResponse> getActiveRestaurantOrders(String restaurantId ){
+        List<Order.OrderStatus> activeStatuses = List.of(
+                Order.OrderStatus.CREATED,
+                Order.OrderStatus.CONFIRMED,
+                Order.OrderStatus.PREPARING,
+                Order.OrderStatus.READY
+        );
+        return orderRepo.findActiveOrdersForRestaurant(restaurantId,activeStatuses).stream()
+                .map(OrderResponse::fromEntity)
+                .toList();
+    }
+
+    //update Order status
+    @Transactional
+    public OrderResponse updateStatus(String orderId , UpdateStatusRequest request){
+        Order order=getOrderEntity(orderId);
+
+        Order.OrderStatus newStatus= Order.OrderStatus.valueOf(request.getStatus().toUpperCase());
+
+        //order state machine to validate transition
+        order.transitionTo(newStatus);
+        //update optional feild
+        if (request.getDriverId()!= null){
+            order.setDriverId(request.getDriverId());
+        }
+        if (request.getEstimatedMins()!=null){
+            order.setEstimatedDeliveryMins(request.getEstimatedMins());
+        }
+
+        Order savedOrder = orderRepo.save(order);
+        log.info("Order {} status changed to {}", orderId, newStatus);
+
+        return OrderResponse.fromEntity(savedOrder);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public Order getOrderEntity(String orderId) {
+        return orderRepo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
     }
 
 }
