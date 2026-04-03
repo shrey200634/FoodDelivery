@@ -5,35 +5,35 @@ import com.foodDelivery.order_service.domain.OrderItem;
 import com.foodDelivery.order_service.dto.*;
 import com.foodDelivery.order_service.kafka.OrderEventProducer;
 import com.foodDelivery.order_service.repository.OrderRepo;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class OrderService {
-   private final OrderRepo orderRepo;
-   private final CartService cartService;
-   private  final OrderEventProducer orderEventProducer;
 
-   // place and order
+    private final OrderRepo orderRepository;
+    private final CartService cartService;
+    private final OrderEventProducer orderEventProducer;
+
+    // ─── Place Order (from Cart) ───────────────────────────────────────
 
     @Transactional
-    public OrderResponse placeOrder(String userId , PlaceOrderRequest request){
-
-        // get current cart
+    public OrderResponse placeOrder(String userId, PlaceOrderRequest request) {
+        // 1. Get current cart
         CartResponse cart = cartService.getCart(userId);
-        if (cart.getItem()==null || cart.getItem().isEmpty()){
+
+        if (cart.getItem() == null || cart.getItem().isEmpty()) {
             throw new RuntimeException("Cart is empty. Add items before placing an order.");
         }
 
-        // create order entity
+        // 2. Create Order entity
         Order order = Order.builder()
                 .userId(userId)
                 .restaurantId(cart.getRestaurantId())
@@ -44,10 +44,11 @@ public class OrderService {
                 .deliveryFee(cart.getDeliveryFee())
                 .totalAmount(cart.getTotal())
                 .specialInstructions(request.getSpecialInstructions())
-                .estimatedDeliveryMins(30)
+                .estimatedDeliveryMins(30) // Default ETA
                 .build();
-        // convert cart item to order item
-        List<OrderItem>   orderItems = cart.getItem().stream()
+
+        // 3. Convert cart items to order items
+        List<OrderItem> orderItems = cart.getItem().stream()
                 .map(cartItem -> OrderItem.builder()
                         .order(order)
                         .menuItemId(cartItem.getMenuItemId())
@@ -56,117 +57,158 @@ public class OrderService {
                         .unitPrice(cartItem.getUnitPrice())
                         .totalPrice(cartItem.getTotalPrice())
                         .addedByUserId(userId)
-                        .build()
-                ).toList();
+                        .build())
+                .toList();
 
         order.setItems(orderItems);
 
-        //save to mysql
-        Order savedOrder = orderRepo.save(order);
+        // 4. Save to MySQL
+        Order savedOrder = orderRepository.save(order);
         log.info("Order placed: orderId={}, userId={}, restaurant={}, total={}",
                 savedOrder.getOrderId(), userId, cart.getRestaurantName(), cart.getTotal());
 
-        //produce to kafka
+        // 5. Publish order-placed event to Kafka
         try {
-           orderEventProducer.sendOrderPlaced(OrderPlacedEvent.builder()
-                           .orderId(savedOrder.getOrderId())
-                           .userId(userId)
-                           .restaurantId(cart.getRestaurantId())
-                           .restaurantName(cart.getRestaurantName())
-                           .totalAmount(cart.getTotal())
-                           .deliveryAddress(request.getDeliverAddress())
-                           .specialInstructions(request.getSpecialInstructions())
-                           .placedAt(savedOrder.getCreatedAt())
-                           .build());
-
-
-        } catch (Exception ex ){
-            log.warn("Failed to publish order-placed event (Kafka may not be running): {}", ex.getMessage());
+            orderEventProducer.sendOrderPlaced(OrderPlacedEvent.builder()
+                    .orderId(savedOrder.getOrderId())
+                    .userId(userId)
+                    .restaurantId(cart.getRestaurantId())
+                    .restaurantName(cart.getRestaurantName())
+                    .totalAmount(cart.getTotal())
+                    .deliveryAddress(request.getDeliverAddress())
+                    .specialInstructions(request.getSpecialInstructions())
+                    .placedAt(savedOrder.getCreatedAt())
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to publish order-placed event (Kafka may not be running): {}", e.getMessage());
         }
 
-        //clear the cart
+        // 6. Clear the cart
         cartService.clearCart(userId);
 
         return OrderResponse.fromEntity(savedOrder);
-
     }
 
-    // get order by ordeerId
+    // ─── Get Order by ID ───────────────────────────────────────────────
 
-    public OrderResponse gwtOrder(String orderId ){
-
-        Order order =getOrderEntity(orderId);
+    public OrderResponse getOrder(String orderId) {
+        Order order = getOrderEntity(orderId);
         return OrderResponse.fromEntity(order);
     }
 
+    // ─── Get My Orders (user history) ──────────────────────────────────
 
-    //get my order (userhistory )
-    public List<OrderResponse> getMyOrder(String userId){
-        return orderRepo.findByUserIdOrderByCreatedAtDesc(userId).stream()
+    public List<OrderResponse> getMyOrders(String userId) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(OrderResponse::fromEntity)
                 .toList();
     }
 
-    //get order for the restaurant
+    // ─── Get Orders for Restaurant (owner dashboard) ───────────────────
 
-    public List<OrderResponse> getRestaurantOwner(String resId){
-        return orderRepo.findByRestaurantIdOrderByCreatedAtDesc(resId).stream()
+    public List<OrderResponse> getRestaurantOrders(String restaurantId) {
+        return orderRepository.findByRestaurantIdOrderByCreatedAtDesc(restaurantId).stream()
                 .map(OrderResponse::fromEntity)
                 .toList();
     }
 
-    //get active order for thew restaurant
-    public List<OrderResponse> getActiveRestaurantOrders(String restaurantId ){
+    // ─── Get Active Orders for Restaurant ──────────────────────────────
+
+    public List<OrderResponse> getActiveRestaurantOrders(String restaurantId) {
         List<Order.OrderStatus> activeStatuses = List.of(
                 Order.OrderStatus.CREATED,
                 Order.OrderStatus.CONFIRMED,
                 Order.OrderStatus.PREPARING,
                 Order.OrderStatus.READY
         );
-        return orderRepo.findActiveOrdersForRestaurant(restaurantId,activeStatuses).stream()
+        return orderRepository.findActiveOrdersForRestaurant(restaurantId, activeStatuses).stream()
                 .map(OrderResponse::fromEntity)
                 .toList();
     }
 
-    //update Order status
+    // ─── Update Order Status (state machine) ───────────────────────────
+
     @Transactional
-    public OrderResponse updateStatus(String orderId , UpdateStatusRequest request){
-        Order order=getOrderEntity(orderId);
+    public OrderResponse updateStatus(String orderId, UpdateStatusRequest request) {
+        Order order = getOrderEntity(orderId);
 
-        Order.OrderStatus newStatus= Order.OrderStatus.valueOf(request.getStatus().toUpperCase());
+        Order.OrderStatus newStatus = Order.OrderStatus.valueOf(request.getStatus().toUpperCase());
 
-        //order state machine to validate transition
+        // Use state machine to validate transition
         order.transitionTo(newStatus);
-        //update optional feild
-        if (request.getDriverId()!= null){
+
+        // Update optional fields
+        if (request.getDriverId() != null) {
             order.setDriverId(request.getDriverId());
         }
-        if (request.getEstimatedMins()!=null){
+        if (request.getEstimatedMins() != null) {
             order.setEstimatedDeliveryMins(request.getEstimatedMins());
         }
 
-        Order savedOrder = orderRepo.save(order);
+        Order savedOrder = orderRepository.save(order);
         log.info("Order {} status changed to {}", orderId, newStatus);
 
         return OrderResponse.fromEntity(savedOrder);
     }
 
+    // ─── Cancel Order ──────────────────────────────────────────────────
 
+    @Transactional
+    public OrderResponse cancelOrder(String orderId, String userId, String reason) {
+        Order order = getOrderEntity(orderId);
 
+        // Only the user who placed the order can cancel
+        if (!order.getUserId().equals(userId)) {
+            throw new RuntimeException("You can only cancel your own orders");
+        }
 
+        // State machine validates if cancellation is allowed
+        order.transitionTo(Order.OrderStatus.CANCELLED);
+        order.setCancellationReason(reason != null ? reason : "Cancelled by user");
 
+        Order savedOrder = orderRepository.save(order);
+        log.info("Order {} cancelled by user {}. Reason: {}", orderId, userId, reason);
 
+        // Publish cancellation event to Kafka
+        try {
+            orderEventProducer.sendOrderCancelled(OrderCancelledEvent.builder()
+                    .orderId(orderId)
+                    .userId(userId)
+                    .restaurantId(order.getRestaurantId())
+                    .reason(order.getCancellationReason())
+                    .cancelledAt(order.getCancelledAt())
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to publish order-cancelled event: {}", e.getMessage());
+        }
 
-
-
-
-
-
-
-
-    public Order getOrderEntity(String orderId) {
-        return orderRepo.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+        return OrderResponse.fromEntity(savedOrder);
     }
 
+    // ─── Handle Order Accepted (from Restaurant via Kafka) ─────────────
+
+    @Transactional
+    public void handleOrderAccepted(OrderAcceptedEvent event) {
+        try {
+            Order order = getOrderEntity(event.getOrderId());
+
+            if (order.getStatus() == Order.OrderStatus.CREATED) {
+                order.transitionTo(Order.OrderStatus.CONFIRMED);
+                if (event.getEstimatedPrepTimeMins() != null) {
+                    order.setEstimatedDeliveryMins(event.getEstimatedPrepTimeMins() + 15); // prep + delivery
+                }
+                orderRepository.save(order);
+                log.info("Order {} confirmed by restaurant {}", event.getOrderId(), event.getRestaurantName());
+            }
+        } catch (Exception e) {
+            log.error("Failed to handle order-accepted for orderId={}: {}", event.getOrderId(), e.getMessage());
+        }
+    }
+
+    // ─── Helper ────────────────────────────────────────────────────────
+
+    public Order getOrderEntity(String orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+    }
 }
