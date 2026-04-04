@@ -2,5 +2,6 @@
 *.jar linguist-vendored
 *.bat linguist-vendored
 gradlew linguist-vendored
-gradle/** linguist-vendored
-.gradle/** linguist-vendored
+**/gradle/** linguist-vendored
+**/.gradle/** linguist-vendored
+*.gradle linguist-generated
