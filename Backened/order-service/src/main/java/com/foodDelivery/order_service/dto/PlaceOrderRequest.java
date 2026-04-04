@@ -6,7 +6,6 @@ import lombok.Data;
 @Data
 public class PlaceOrderRequest {
 
-    @NotBlank(message = "Deliver address id is required")
     private String deliveryAddressId;
 
 
