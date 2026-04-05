@@ -25,7 +25,7 @@ public class OrderEventConsumer {
                 event.getOrderId(),event.getRestaurantName());
 
         try{
-            deliveryService.createDelivery(event);
+          //  deliveryService.createDelivery(event);
         }catch (Exception ex ){
             log.error("Failed to process order-placed event for orderId={}: {}",
                     event.getOrderId(), ex.getMessage());
@@ -43,7 +43,7 @@ public class OrderEventConsumer {
                 event.getOrderId() , event.getReason());
 
         try{
-            deliveryService.cancelDelivery(event.getOrderId(), event.getReason());
+            //deliveryService.cancelDelivery(event.getOrderId(), event.getReason());
         }catch (Exception ex ){
             log.error("Failed to process order-cancelled event for orderId={}: {}",
                     event.getOrderId()  , ex.getMessage());
