@@ -51,7 +51,7 @@ public class DriverMatchingService {
 
     /**
      * Find the nearest available driver to a restaurant.
-     * Uses Redis GEORADIUS — O(log N) nearest-driver queries.
+     * Uses Redis GEO RADIUS — O(log N) nearest-driver queries.
      *
      * Algorithm:
      * 1. Query Redis GEO for all drivers within radius of restaurant
