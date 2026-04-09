@@ -61,7 +61,7 @@ public class TrackingService {
 
         // push to webSocket topic = all subscriber for this order get the updte
 
-        String destination  = "/topic/tracking" +delivery.getOrderId();
+        String destination  = "/topic/tracking/" +delivery.getOrderId();
         messagingTemplate.convertAndSend(destination,update);
 
         log.debug("Broadcast location for order {}: lat={}, lng={}, eta={}mins",
