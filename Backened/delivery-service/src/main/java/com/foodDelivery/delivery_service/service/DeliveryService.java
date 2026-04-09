@@ -315,8 +315,24 @@ public class DeliveryService {
                  .toList();
 
     }
-    //
+    //get delivery history for a driver
+    public  DeliveryResponse getActiveDeliveryForDriver(String driverId ){
+         Delivery delivery = deliveryRepo.findActiveDeliveryByDriverId(driverId)
+                 .orElseThrow(()-> new IllegalStateException("No active delivery for this driver"));
+         return toDeliveryResponse(delivery);
+    }
 
+    //Retry matching for all pending delivery (Called By Scheduler)
+
+    @Transactional
+    public void retryPendingDeliveries(){
+         List<Delivery> pending = deliveryRepo.findPendingDeliveries();
+         for (Delivery delivery : pending){
+             log.info("Retrying driver assignment for delivery {}", delivery.getDeliveryId());
+             attemptDriverAssignment(delivery);
+
+         }
+    }
 
     //--------Mappers ---------------//
 
