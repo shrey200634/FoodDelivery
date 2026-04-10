@@ -30,7 +30,7 @@ public class WalletService {
 
     @Transactional
     public WalletResponse createWallet(String userId) {
-        if (walletRepository.existByUserId(userId)) {
+        if (walletRepository.existsByUserId (userId)) {
             // Idempotent — return existing wallet
             return toResponse(walletRepository.findByUserId(userId).get());
         }
@@ -72,7 +72,7 @@ public class WalletService {
 
     @Transactional
     public WalletResponse lockFunds(String userId, String orderId, BigDecimal amount) {
-        if (fundLockRepository.existByOrderId(orderId)) {
+        if (fundLockRepository.existsByOrderId(orderId)) {
             throw new DuplicateLockException("Funds already locked for order: " + orderId);
         }
 
@@ -87,7 +87,7 @@ public class WalletService {
         fundLockRepository.save(FundLock.builder()
                 .walletId(wallet.getWalletId())
                 .orderId(orderId)
-                .usrId(userId)
+                .userId(userId)
                 .amount(amount)
                 .status(FundLock.LockStatus.LOCKED)
                 .build());
@@ -111,14 +111,14 @@ public class WalletService {
         FundLock lock = fundLockRepository.findByOrderIdAndStatus(orderId, FundLock.LockStatus.LOCKED)
                 .orElseThrow(() -> new ResourceNotFoundException("No active lock found for order: " + orderId));
 
-        Wallet wallet = getWalletEntity(lock.getUsrId());
+        Wallet wallet = getWalletEntity(lock.getUserId());
         wallet.setLockedBalance(wallet.getLockedBalance().subtract(lock.getAmount()));
         wallet = walletRepository.save(wallet);
         lock.setStatus(FundLock.LockStatus.RELEASED);
         lock.setReleasedAt(java.time.LocalDateTime.now());
         fundLockRepository.save(lock);
         transactionRepository.save(Transaction.builder()
-                .userId(lock.getUsrId())
+                .userId(lock.getUserId())
                 .orderId(orderId)
                 .txnType(Transaction.TxnType.RELEASE)
                 .amount(lock.getAmount())
@@ -126,7 +126,7 @@ public class WalletService {
                 .balanceAfter(wallet.getAvailableBalance())
                 .build());
 
-        log.info("Released {} for orderId={}, userId={}. Available={}", lock.getAmount(), orderId, lock.getUsrId(), wallet.getAvailableBalance());
+        log.info("Released {} for orderId={}, userId={}. Available={}", lock.getAmount(), orderId, lock.getUserId(), wallet.getAvailableBalance());
         return toResponse(wallet);
     }
 
