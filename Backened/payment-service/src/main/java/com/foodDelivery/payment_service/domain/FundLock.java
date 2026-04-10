@@ -28,9 +28,9 @@ public class FundLock {
     private String orderId ;
 
     @Column(nullable = false, length = 36)
-    private String usrId ;
+    private String userId ;
 
-    @Column(nullable = false, length = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount ;
 
     @Enumerated(EnumType.STRING)
