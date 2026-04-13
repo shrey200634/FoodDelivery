@@ -16,15 +16,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    // Only force logout when the auth endpoints themselves reject the token
+    // Only force logout on a 401 from the login endpoint itself.
+    // Never auto-logout on other 401s — that destroys the session
+    // when a downstream service has transient issues.
     const url = err.config?.url || "";
-    const isAuthCritical =
-      url.endsWith("/auth/login") ||
-      url.endsWith("/users/profile") && err.config?.method === "get";
-
-    if (err.response?.status === 401 && isAuthCritical) {
+    const isLoginCall = url.endsWith("/auth/login");
+    
+    if (err.response?.status === 401 && isLoginCall) {
       useAuthStore.getState().logout();
-      window.location.href = "/login";
     }
     return Promise.reject(err);
   }
