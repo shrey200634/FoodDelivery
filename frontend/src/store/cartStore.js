@@ -5,47 +5,37 @@ import api from "../api/axios";
 export const useCartStore = create(
   persist(
     (set, get) => ({
-      items: [],           // [{ menuItemId, name, price, isVeg, imageUrl, quantity, restaurantId, restaurantName }]
+      items: [],
       restaurantId: null,
       restaurantName: null,
       loading: false,
 
-      // ── computed (use functions, not getters — getters break with persist) ──
       getTotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
       getItemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
-      // ── actions ──
-
-      // Returns true if cart was cleared (cross-restaurant), false if normal add
       addItem: async (item, restaurantId, restaurantName) => {
         const state = get();
-        // Cross-restaurant guard
         if (state.restaurantId && state.restaurantId !== restaurantId && state.items.length > 0) {
           return { conflict: true, existingRestaurant: state.restaurantName };
         }
 
-        // Sync to backend
         try {
           await api.post("/cart/add", {
             restaurantId,
-            restaurantName: restaurantName,
+            restaurantName,
             menuItemId: item.itemId,
             menuItemName: item.name,
             unitPrice: item.price,
             quantity: 1,
           });
-        } catch (e) {
-          // silent — still update local state
-        }
+        } catch {}
 
         set((s) => {
           const existing = s.items.find((i) => i.menuItemId === item.itemId);
           if (existing) {
             return {
               items: s.items.map((i) =>
-                i.menuItemId === item.itemId
-                  ? { ...i, quantity: i.quantity + 1 }
-                  : i
+                i.menuItemId === item.itemId ? { ...i, quantity: i.quantity + 1 } : i
               ),
             };
           }
@@ -73,30 +63,29 @@ export const useCartStore = create(
       clearAndAdd: async (item, restaurantId, restaurantName) => {
         try { await api.delete("/cart/clear"); } catch {}
         set({
-          items: [
-            {
-              menuItemId: item.itemId,
-              name: item.name,
-              price: item.price,
-              isVeg: item.isVeg,
-              imageUrl: item.imageUrl,
-              quantity: 1,
-              restaurantId,
-              restaurantName,
-            },
-          ],
+          items: [{
+            menuItemId: item.itemId,
+            name: item.name,
+            price: item.price,
+            isVeg: item.isVeg,
+            imageUrl: item.imageUrl,
+            quantity: 1,
+            restaurantId,
+            restaurantName,
+          }],
           restaurantId,
           restaurantName,
         });
       },
 
+      // BUG FIX #7: backend uses @RequestParam not @RequestBody for quantity
       updateQuantity: async (menuItemId, quantity) => {
         if (quantity <= 0) {
           get().removeItem(menuItemId);
           return;
         }
         try {
-          await api.put(`/cart/update/${menuItemId}`, { quantity });
+          await api.put(`/cart/update/${menuItemId}`, null, { params: { quantity } });
         } catch {}
         set((s) => ({
           items: s.items.map((i) =>
@@ -106,9 +95,7 @@ export const useCartStore = create(
       },
 
       removeItem: async (menuItemId) => {
-        try {
-          await api.delete(`/cart/remove/${menuItemId}`);
-        } catch {}
+        try { await api.delete(`/cart/remove/${menuItemId}`); } catch {}
         set((s) => {
           const items = s.items.filter((i) => i.menuItemId !== menuItemId);
           return {
@@ -124,13 +111,12 @@ export const useCartStore = create(
         set({ items: [], restaurantId: null, restaurantName: null });
       },
 
-      // Sync from backend (call on app load)
       fetchCart: async () => {
         set({ loading: true });
         try {
           const res = await api.get("/cart");
           const data = res.data;
-          if (data && data.items && Array.isArray(data.items)) {
+          if (data && Array.isArray(data.items)) {
             set({
               items: data.items,
               restaurantId: data.restaurantId || null,

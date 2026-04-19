@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import api from "../api/axios";
 
-export const useRestaurantStore = create((set, get) => ({
+export const useRestaurantStore = create((set) => ({
   topRated: [],
   nearby: [],
   searchResults: [],
@@ -16,14 +16,15 @@ export const useRestaurantStore = create((set, get) => ({
     set({ loading: true });
     try {
       const res = await api.get("/restaurants/top-rated");
-      set({ topRated: res.data, loading: false });
+      set({ topRated: Array.isArray(res.data) ? res.data : [], loading: false });
     } catch { set({ loading: false }); }
   },
 
+  // BUG FIX #3: backend expects `lat` and `lng` not `latitude`/`longitude`
   fetchNearby: async (lat = 28.6139, lng = 77.2090) => {
     try {
-      const res = await api.get("/restaurants/nearby", { params: { latitude: lat, longitude: lng } });
-      set({ nearby: res.data });
+      const res = await api.get("/restaurants/nearby", { params: { lat, lng } });
+      set({ nearby: Array.isArray(res.data) ? res.data : [] });
     } catch {}
   },
 
@@ -31,7 +32,7 @@ export const useRestaurantStore = create((set, get) => ({
     set({ loading: true });
     try {
       const res = await api.get("/restaurants/search", { params: { keyword: query } });
-      set({ searchResults: res.data, loading: false });
+      set({ searchResults: Array.isArray(res.data) ? res.data : [], loading: false });
     } catch { set({ loading: false }); }
   },
 
@@ -46,9 +47,9 @@ export const useRestaurantStore = create((set, get) => ({
       ]);
       set({
         current: details.data,
-        categories: categories.data || [],
-        menuItems: items.data || [],
-        reviews: reviews.data || [],
+        categories: Array.isArray(categories.data) ? categories.data : [],
+        menuItems: Array.isArray(items.data) ? items.data : [],
+        reviews: Array.isArray(reviews.data) ? reviews.data : [],
         loading: false,
       });
     } catch (err) {

@@ -2,9 +2,9 @@ import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 
 function normaliseRole(role = "") {
-  const r = role.toUpperCase();
-  if (r.includes("OWNER")) return "RESTAURANT_OWNER";
-  if (r.includes("DRIVER") || r.includes("DELIVERY")) return "DRIVER";
+  const r = (role || "").toUpperCase();
+  if (r.includes("OWNER") || r.includes("RESTAURANT")) return "RESTAURANT_OWNER";
+  if (r.includes("DRIVER") || r.includes("DELIVERY"))   return "DRIVER";
   return "CUSTOMER";
 }
 

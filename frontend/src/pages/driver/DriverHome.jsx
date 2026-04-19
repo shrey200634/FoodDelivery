@@ -3,10 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import toast from "react-hot-toast";
-import {
-  Navigation, Package, CheckCircle, DollarSign,
-  Loader2, Wifi, WifiOff, MapPin, Phone, AlertCircle
-} from "lucide-react";
+import { Navigation, Package, CheckCircle, DollarSign, Loader2, Wifi, WifiOff, MapPin } from "lucide-react";
 import { useDriverStore } from "../../store/driverStore";
 import { useAuthStore } from "../../store/authStore";
 import socketService from "../../services/socketService";
@@ -23,7 +20,6 @@ const TC_SOFT = "#DE6A40";
 const SUCCESS = "#15803D";
 const SAFFRON = "#D4882A";
 const INK     = "#1C1208";
-const INK_SOFT = "rgba(28,18,8,0.6)";
 const INK_MUTED = "rgba(28,18,8,0.38)";
 const INK_HAIR = "rgba(28,18,8,0.07)";
 const CARD    = "#FFF9EE";
@@ -42,7 +38,9 @@ const homeIcon   = makeIcon("🏠", SAFFRON);
 
 function MapFlyTo({ pos }) {
   const map = useMap();
-  useEffect(() => { if (pos) map.flyTo(pos, 15, { animate: true, duration: 1 }); }, [pos?.[0], pos?.[1]]);
+  useEffect(() => {
+    if (pos) map.flyTo(pos, 15, { animate: true, duration: 1 });
+  }, [pos?.[0], pos?.[1]]);
   return null;
 }
 
@@ -79,7 +77,8 @@ export default function DriverHome() {
     const subscribe = () => {
       sub = socketService.subscribeToDriverAssignments(driverProfile.driverId, () => {
         toast.success("🔔 New delivery assigned!", { duration: 6000 });
-        setNew(true); setTimeout(() => setNew(false), 8000);
+        setNew(true);
+        setTimeout(() => setNew(false), 8000);
         fetchActiveDelivery();
       });
     };
@@ -88,7 +87,7 @@ export default function DriverHome() {
     return () => { if (typeof sub?.unsubscribe === "function") sub.unsubscribe(); };
   }, [driverProfile?.driverId]);
 
-  // Emit location via WS every 5s when active
+  // Emit location every 5s when active delivery exists
   useEffect(() => {
     if (!isOnline || !currentLocation || !activeDelivery) return;
     const send = () => socketService.sendDriverLocation(
@@ -100,25 +99,30 @@ export default function DriverHome() {
     return () => clearInterval(locTimer.current);
   }, [isOnline, currentLocation?.latitude, currentLocation?.longitude, activeDelivery?.orderId]);
 
-  // Toggle online
   const handleToggle = async () => {
     setToggling(true);
     try {
       if (isOnline) {
-        await goOffline(); stopLocationTracking(); clearInterval(locTimer.current);
+        await goOffline();
+        stopLocationTracking();
+        clearInterval(locTimer.current);
         toast.success("You're offline. Rest well! 😴");
       } else {
         const pos = await new Promise(res =>
-          navigator.geolocation.getCurrentPosition(res,
+          navigator.geolocation.getCurrentPosition(
+            res,
             () => res({ coords: { latitude: 28.6139, longitude: 77.209 } }),
-            { timeout: 8000 })
+            { timeout: 8000 }
+          )
         );
         await goOnline(pos.coords.latitude, pos.coords.longitude);
         startLocationTracking();
         setMapCenter([pos.coords.latitude, pos.coords.longitude]);
         toast.success("You're online! Ready for deliveries 🚀");
       }
-    } catch (err) { toast.error(err?.response?.data?.message || "Failed"); }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to update status");
+    }
     setToggling(false);
   };
 
@@ -136,13 +140,12 @@ export default function DriverHome() {
     setActionBusy(false);
   };
 
-  // Driver registration screen
-  if (!driverProfile) return <RegisterScreen onSuccess={async () => { await fetchProfile(); }} />;
+  if (!driverProfile) return <RegisterScreen user={user} onSuccess={async () => { await fetchProfile(); }} />;
 
-  const locPos = currentLocation ? [currentLocation.latitude, currentLocation.longitude] : null;
+  const locPos  = currentLocation ? [currentLocation.latitude, currentLocation.longitude] : null;
   const pickPos = activeDelivery?.pickupLatitude ? [activeDelivery.pickupLatitude, activeDelivery.pickupLongitude] : null;
-  const custPos = activeDelivery?.deliveryLatitude ? [activeDelivery.deliveryLatitude, activeDelivery.deliveryLongitude] : null;
-  const dStatus = activeDelivery?.deliveryStatus || activeDelivery?.status || "";
+  const custPos = activeDelivery?.dropoffLatitude ? [activeDelivery.dropoffLatitude, activeDelivery.dropoffLongitude] : null;
+  const dStatus = activeDelivery?.status || "";
   const isPickedUp = dStatus === "PICKED_UP";
 
   return (
@@ -151,8 +154,8 @@ export default function DriverHome() {
       {newAssignment && (
         <div style={{ background: `linear-gradient(135deg, ${TC_SOFT}, ${TC})`,
           margin: "16px 16px 0", borderRadius: 14, padding: "14px 18px",
-          display: "flex", alignItems: "center", gap: 10, animation: "slide-in 0.3s ease-out",
-          boxShadow: `0 4px 20px ${TC}40` }}>
+          display: "flex", alignItems: "center", gap: 10,
+          animation: "slide-in 0.3s ease-out", boxShadow: `0 4px 20px ${TC}40` }}>
           <span style={{ fontSize: "1.4rem" }}>🔔</span>
           <div>
             <div style={{ color: "#FFF5E6", fontWeight: 700, fontSize: "0.92rem" }}>New delivery assigned!</div>
@@ -161,45 +164,45 @@ export default function DriverHome() {
         </div>
       )}
 
-      {/* Greeting + toggle */}
+      {/* Header */}
       <div style={{ padding: "20px 18px 0" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
             <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.6rem", fontWeight: 500,
               color: INK, letterSpacing: "-0.02em" }}>
-              Hey, {user?.name?.split(" ")[0] || "Driver"} 👋
+              Hey, {driverProfile.name || user?.name?.split(" ")[0] || "Driver"} 👋
             </h2>
             <p style={{ fontSize: "0.8rem", color: INK_MUTED, marginTop: 3 }}>
-              {driverProfile.vehicleType} · {driverProfile.vehicleNumber || "—"}
+              {driverProfile.vehicleType} · {driverProfile.vehicleNumber || driverProfile.vehicleNum || "—"}
             </p>
           </div>
           <button onClick={handleToggle} disabled={toggling} style={{
             padding: "12px 18px", borderRadius: 14, border: "none",
-            background: isOnline ? "linear-gradient(135deg,#16A34A,#15803D)" : `linear-gradient(135deg,${TC_SOFT},${TC})`,
+            background: isOnline
+              ? "linear-gradient(135deg,#16A34A,#15803D)"
+              : `linear-gradient(135deg,${TC_SOFT},${TC})`,
             color: "#FFF5E6", fontWeight: 700, fontSize: "0.9rem",
             cursor: toggling ? "not-allowed" : "pointer",
             boxShadow: isOnline ? "0 4px 16px rgba(21,128,61,0.45)" : `0 4px 16px ${TC}50`,
             display: "flex", alignItems: "center", gap: 8, opacity: toggling ? 0.7 : 1 }}>
-            {toggling ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+            {toggling
+              ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
               : isOnline ? <WifiOff size={16} /> : <Wifi size={16} />}
             {isOnline ? "Go Offline" : "Go Online"}
           </button>
         </div>
 
-        {/* Quick stats */}
+        {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-          <StatCard label="Active" value={activeDelivery ? "1" : "0"} icon="📦"
-            highlight={!!activeDelivery} color={TC} />
-          <StatCard label="Status" value={isOnline ? "Online" : "Offline"} icon={isOnline ? "🟢" : "⚫"}
-            highlight={isOnline} color={SUCCESS} />
+          <StatCard label="Active" value={activeDelivery ? "1" : "0"} emoji="📦" highlight={!!activeDelivery} color={TC} />
+          <StatCard label="Status" value={isOnline ? "Online" : "Offline"} emoji={isOnline ? "🟢" : "⚫"} highlight={isOnline} color={SUCCESS} />
         </div>
       </div>
 
       {/* Active delivery card */}
       {activeDelivery ? (
         <div style={{ margin: "0 16px 20px", background: "#FFF", borderRadius: 20,
-          border: `2px solid ${TC}25`, overflow: "hidden",
-          boxShadow: `0 6px 24px ${TC}15` }}>
+          border: `2px solid ${TC}25`, overflow: "hidden", boxShadow: `0 6px 24px ${TC}15` }}>
           <div style={{ background: `linear-gradient(135deg, ${TC_SOFT}15, ${TC}08)`,
             padding: "18px 20px", borderBottom: `1px solid ${INK_HAIR}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -212,38 +215,30 @@ export default function DriverHome() {
               </div>
               <span style={{ padding: "6px 14px", borderRadius: 999,
                 background: isPickedUp ? `${SUCCESS}15` : `${TC}12`,
-                color: isPickedUp ? SUCCESS : TC,
-                fontSize: "0.75rem", fontWeight: 700 }}>
+                color: isPickedUp ? SUCCESS : TC, fontSize: "0.75rem", fontWeight: 700 }}>
                 {isPickedUp ? "Picked Up" : "Assigned"}
               </span>
             </div>
           </div>
 
           <div style={{ padding: "18px 20px" }}>
-            {/* Route */}
-            <RouteStop icon="🍽" label="Pick up from" name={activeDelivery.restaurantName || "Restaurant"}
+            <RouteStop icon="🍽" label="Pick up from"
+              name={activeDelivery.restaurantName || "Restaurant"}
               addr={activeDelivery.pickupAddress || "Restaurant address"} color={TC} />
             <div style={{ width: 2, height: 20, background: INK_HAIR, marginLeft: 21, marginTop: 4, marginBottom: 4 }} />
-            <RouteStop icon="🏠" label="Deliver to" name={activeDelivery.customerName || "Customer"}
-              addr={activeDelivery.deliveryAddress || activeDelivery.deliverAddress || "Customer address"}
-              color={SAFFRON} />
+            <RouteStop icon="🏠" label="Deliver to"
+              name={activeDelivery.driverName ? "Customer" : "Customer"}
+              addr={activeDelivery.dropoffAddress || "Customer address"} color={SAFFRON} />
 
-            {/* Earnings */}
-            {(activeDelivery.deliveryFee || activeDelivery.earnings) && (
-              <div style={{ marginTop: 16, padding: "10px 14px", background: `${SUCCESS}0C`,
-                borderRadius: 10, display: "flex", alignItems: "center", gap: 8,
-                border: `1px solid ${SUCCESS}20` }}>
-                <DollarSign size={15} style={{ color: SUCCESS }} />
-                <span style={{ fontSize: "0.88rem", fontWeight: 700, color: SUCCESS }}>
-                  Earning: ₹{parseFloat(activeDelivery.deliveryFee || activeDelivery.earnings || 0).toFixed(0)}
-                </span>
+            {activeDelivery.estimatedDeliveryMins && (
+              <div style={{ marginTop: 14, padding: "10px 14px", background: `${SAFFRON}10`,
+                borderRadius: 10, fontSize: "0.82rem", color: SAFFRON, fontWeight: 600,
+                display: "flex", alignItems: "center", gap: 6 }}>
+                ⏱ Estimated: {activeDelivery.estimatedDeliveryMins} mins
               </div>
             )}
 
-            {/* Big action button */}
-            <button
-              onClick={isPickedUp ? handleComplete : handlePickup}
-              disabled={actionBusy}
+            <button onClick={isPickedUp ? handleComplete : handlePickup} disabled={actionBusy}
               style={{ width: "100%", marginTop: 18, padding: "16px", borderRadius: 14, border: "none",
                 background: isPickedUp
                   ? "linear-gradient(135deg,#16A34A,#15803D)"
@@ -256,13 +251,11 @@ export default function DriverHome() {
                 opacity: actionBusy ? 0.7 : 1 }}>
               {actionBusy
                 ? <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} />
-                : isPickedUp ? <><CheckCircle size={20} /> Complete Delivery</>
-                  : <><Package size={20} /> Confirm Pickup</>}
+                : isPickedUp ? <><CheckCircle size={20} /> Complete Delivery</> : <><Package size={20} /> Confirm Pickup</>}
             </button>
           </div>
         </div>
       ) : (
-        /* Waiting state */
         <div style={{ margin: "0 16px 20px", background: CARD, borderRadius: 20,
           border: `1.5px dashed ${INK_HAIR}`, padding: "32px 24px", textAlign: "center" }}>
           <div style={{ fontSize: "3rem", marginBottom: 12 }}>{isOnline ? "⏳" : "💤"}</div>
@@ -272,21 +265,20 @@ export default function DriverHome() {
           <p style={{ fontSize: "0.84rem", color: INK_MUTED, lineHeight: 1.6 }}>
             {isOnline
               ? "Stay in the app. A delivery will be assigned to you automatically."
-              : "Toggle 'Go Online' above to start accepting deliveries."}
+              : "Tap 'Go Online' to start accepting deliveries."}
           </p>
         </div>
       )}
 
       {/* Live Map */}
       <div style={{ margin: "0 16px", borderRadius: 20, overflow: "hidden",
-        border: `1px solid ${INK_HAIR}`, height: 280,
-        boxShadow: "0 4px 20px rgba(28,18,8,0.08)" }}>
+        border: `1px solid ${INK_HAIR}`, height: 280, boxShadow: "0 4px 20px rgba(28,18,8,0.08)" }}>
         <MapContainer center={mapCenter} zoom={14} style={{ height: "100%", width: "100%" }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; OpenStreetMap contributors' />
           <MapFlyTo pos={locPos || (pickPos ? pickPos : undefined)} />
-          {locPos  && <Marker position={locPos} icon={driverIcon}><Popup>📍 You</Popup></Marker>}
-          {pickPos && <Marker position={pickPos} icon={restIcon}><Popup>🍽 Restaurant</Popup></Marker>}
+          {locPos  && <Marker position={locPos} icon={driverIcon}><Popup>📍 You are here</Popup></Marker>}
+          {pickPos && <Marker position={pickPos} icon={restIcon}><Popup>🍽 {activeDelivery?.restaurantName || "Restaurant"}</Popup></Marker>}
           {custPos && <Marker position={custPos} icon={homeIcon}><Popup>🏠 Customer</Popup></Marker>}
           {locPos && pickPos && !isPickedUp && (
             <Polyline positions={[locPos, pickPos]} color={TC} weight={3} opacity={0.7} dashArray="8 6" />
@@ -297,7 +289,6 @@ export default function DriverHome() {
         </MapContainer>
       </div>
 
-      {/* Location pill */}
       {currentLocation && (
         <div style={{ margin: "12px 16px 0", padding: "10px 14px", background: CARD,
           borderRadius: 10, border: `1px solid ${INK_HAIR}`,
@@ -319,11 +310,11 @@ export default function DriverHome() {
   );
 }
 
-function StatCard({ label, value, icon, highlight, color }) {
+function StatCard({ label, value, emoji, highlight, color }) {
   return (
     <div style={{ background: highlight ? `${color}12` : CARD, borderRadius: 16, padding: "16px 18px",
       border: `1px solid ${highlight ? color + "30" : INK_HAIR}` }}>
-      <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>{icon}</div>
+      <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>{emoji}</div>
       <div style={{ fontFamily: "var(--font-display)", fontSize: "1.6rem", fontWeight: 500,
         color: highlight ? color : INK }}>{value}</div>
       <div style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
@@ -348,32 +339,54 @@ function RouteStop({ icon, label, name, addr, color }) {
   );
 }
 
-function RegisterScreen({ onSuccess }) {
+// BUG FIX #5: DriverRegistrationRequest needs name, phone, vehicleType, vehicleNum
+function RegisterScreen({ user, onSuccess }) {
   const { registerDriver } = useDriverStore();
-  const [form, setForm] = useState({ vehicleType: "MOTORCYCLE", vehicleNumber: "", licenseNumber: "" });
+  const [form, setForm] = useState({
+    name: user?.name || "",
+    phone: user?.phone || "",
+    vehicleType: "MOTORCYCLE",
+    vehicleNumber: "",   // we'll map to vehicleNum on submit
+  });
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!form.vehicleNumber || !form.licenseNumber) { toast.error("All fields required"); return; }
+    if (!form.name.trim())        return toast.error("Name is required");
+    if (!form.phone.trim())       return toast.error("Phone number is required");
+    if (!form.vehicleNumber.trim()) return toast.error("Vehicle number is required");
+
     setLoading(true);
-    try { await registerDriver(form); await onSuccess(); toast.success("Welcome aboard! 🎉"); }
-    catch (err) { toast.error(err?.response?.data?.message || "Registration failed"); }
+    try {
+      await registerDriver(form);   // driverStore maps vehicleNumber → vehicleNum
+      await onSuccess();
+      toast.success("Welcome aboard! 🎉");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Registration failed. Try again.");
+    }
     setLoading(false);
   };
+
+  const s = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+
+  const iStyle = { width: "100%", padding: "13px 15px", background: FIELD, borderRadius: 12,
+    border: "1.5px solid transparent", fontSize: "0.95rem", color: INK,
+    fontFamily: "var(--font-sans)", outline: "none", boxSizing: "border-box",
+    transition: "border-color 0.2s" };
 
   return (
     <div style={{ padding: "32px 20px" }}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
         <div style={{ fontSize: "3.5rem", marginBottom: 12 }}>🛵</div>
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", color: INK, marginBottom: 8 }}>
-          Become a Driver
+          Register as Driver
         </h2>
         <p style={{ fontSize: "0.9rem", color: INK_MUTED, lineHeight: 1.6 }}>
-          Join our delivery fleet and start earning today!
+          Fill in your details to start delivering on FoodRush
         </p>
       </div>
 
       <div style={{ background: CARD, borderRadius: 20, padding: "24px", border: `1px solid ${INK_HAIR}` }}>
+        {/* Vehicle type */}
         <div style={{ marginBottom: 18 }}>
           <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
             letterSpacing: "0.1em", color: INK_MUTED, marginBottom: 8 }}>Vehicle Type</label>
@@ -389,28 +402,37 @@ function RegisterScreen({ onSuccess }) {
           </div>
         </div>
 
-        {[
-          ["vehicleNumber", "Vehicle Number", "e.g. DL 01 AB 1234"],
-          ["licenseNumber", "License Number", "Driver's license no."],
-        ].map(([key, label, ph]) => (
-          <div key={key} style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
-              letterSpacing: "0.1em", color: INK_MUTED, marginBottom: 7 }}>{label}</label>
-            <input value={form[key]} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-              placeholder={ph}
-              style={{ width: "100%", padding: "13px 15px", background: FIELD, borderRadius: 12,
-                border: "1.5px solid transparent", fontSize: "0.95rem", color: INK,
-                fontFamily: "var(--font-sans)", outline: "none", boxSizing: "border-box" }}
-              onFocus={e => e.target.style.borderColor = TC}
-              onBlur={e => e.target.style.borderColor = "transparent"} />
-          </div>
-        ))}
+        {/* Name */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
+            letterSpacing: "0.1em", color: INK_MUTED, marginBottom: 7 }}>Full Name *</label>
+          <input value={form.name} onChange={s("name")} placeholder="Your full name"
+            style={iStyle} onFocus={e => e.target.style.borderColor = TC} onBlur={e => e.target.style.borderColor = "transparent"} />
+        </div>
 
-        <button onClick={handleRegister} disabled={loading} style={{ width: "100%", marginTop: 8, padding: "15px",
-          borderRadius: 14, border: "none", background: `linear-gradient(135deg, ${TC_SOFT}, ${TC})`,
-          color: "#FFF5E6", fontWeight: 700, fontSize: "1rem", cursor: loading ? "not-allowed" : "pointer",
-          fontFamily: "var(--font-sans)", display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 10, boxShadow: `0 6px 20px ${TC}40`, opacity: loading ? 0.7 : 1 }}>
+        {/* Phone */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
+            letterSpacing: "0.1em", color: INK_MUTED, marginBottom: 7 }}>Phone Number *</label>
+          <input value={form.phone} onChange={s("phone")} placeholder="+91 98765 43210"
+            style={iStyle} onFocus={e => e.target.style.borderColor = TC} onBlur={e => e.target.style.borderColor = "transparent"} />
+        </div>
+
+        {/* Vehicle number */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase",
+            letterSpacing: "0.1em", color: INK_MUTED, marginBottom: 7 }}>Vehicle Number *</label>
+          <input value={form.vehicleNumber} onChange={s("vehicleNumber")} placeholder="e.g. DL 01 AB 1234"
+            style={iStyle} onFocus={e => e.target.style.borderColor = TC} onBlur={e => e.target.style.borderColor = "transparent"} />
+        </div>
+
+        <button onClick={handleRegister} disabled={loading} style={{ width: "100%", marginTop: 8,
+          padding: "15px", borderRadius: 14, border: "none",
+          background: `linear-gradient(135deg, ${TC_SOFT}, ${TC})`, color: "#FFF5E6",
+          fontWeight: 700, fontSize: "1rem", cursor: loading ? "not-allowed" : "pointer",
+          fontFamily: "var(--font-sans)", display: "flex", alignItems: "center",
+          justifyContent: "center", gap: 10, boxShadow: `0 6px 20px ${TC}40`,
+          opacity: loading ? 0.7 : 1 }}>
           {loading && <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />}
           Register as Driver
         </button>

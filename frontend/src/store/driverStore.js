@@ -2,6 +2,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "../api/axios";
 
+// BUG FIX #6: DriverResponse.status is "AVAILABLE"|"OFFLINE"|"ON_DELIVERY"
+// There's no `available` boolean — we derive isOnline from status
+const isAvailable = (profile) => profile?.status === "AVAILABLE";
+
 export const useDriverStore = create(
   persist(
     (set, get) => ({
@@ -13,38 +17,52 @@ export const useDriverStore = create(
       locationWatchId: null,
       loading: false,
 
-      // ── Profile ─────────────────────────────────────────────────────
       fetchProfile: async () => {
         set({ loading: true });
         try {
           const res = await api.get("/driver/profile");
-          set({ driverProfile: res.data, loading: false });
-          return res.data;
+          const profile = res.data;
+          set({
+            driverProfile: profile,
+            isOnline: isAvailable(profile),
+            loading: false,
+          });
+          return profile;
         } catch {
           set({ loading: false });
           return null;
         }
       },
 
+      // BUG FIX #5: backend expects `vehicleNum` not `vehicleNumber`
+      // Also requires name + phone (from user profile ideally)
       registerDriver: async (data) => {
-        const res = await api.post("/driver/register", data);
-        set({ driverProfile: res.data.driver });
+        const payload = {
+          name: data.name,
+          phone: data.phone,
+          vehicleType: data.vehicleType,
+          vehicleNum: data.vehicleNumber || data.vehicleNum, // accept both
+        };
+        const res = await api.post("/driver/register", payload);
+        // Response: { message, driver: DriverResponse }
+        const profile = res.data?.driver || res.data;
+        set({ driverProfile: profile, isOnline: isAvailable(profile) });
         return res.data;
       },
 
-      // ── Online/Offline ──────────────────────────────────────────────
       goOnline: async (latitude, longitude) => {
         const res = await api.post("/driver/go-online", null, {
           params: { latitude, longitude },
         });
-        set({ isOnline: true, driverProfile: res.data.driver });
+        const profile = res.data?.driver || res.data;
+        set({ isOnline: true, driverProfile: profile });
         return res.data;
       },
 
       goOffline: async () => {
         const res = await api.post("/driver/go-offline");
-        set({ isOnline: false, driverProfile: res.data.driver });
-        // Stop location tracking
+        const profile = res.data?.driver || res.data;
+        set({ isOnline: false, driverProfile: profile });
         const watchId = get().locationWatchId;
         if (watchId) {
           navigator.geolocation.clearWatch(watchId);
@@ -53,17 +71,12 @@ export const useDriverStore = create(
         return res.data;
       },
 
-      // ── Location ─────────────────────────────────────────────────────
       updateLocation: async (latitude, longitude) => {
         const driverId = get().driverProfile?.driverId;
         if (!driverId) return;
         set({ currentLocation: { latitude, longitude } });
         try {
-          await api.post("/driver/location", {
-            driverId,
-            latitude,
-            longitude,
-          });
+          await api.post("/driver/location", { driverId, latitude, longitude });
         } catch {}
       },
 
@@ -88,12 +101,13 @@ export const useDriverStore = create(
         }
       },
 
-      // ── Deliveries ───────────────────────────────────────────────────
       fetchActiveDelivery: async () => {
         try {
           const res = await api.get("/delivery/driver/active");
-          set({ activeDelivery: res.data });
-          return res.data;
+          // Response can be a single DeliveryResponse or wrapped
+          const delivery = res.data?.delivery || res.data;
+          set({ activeDelivery: delivery?.deliveryId ? delivery : null });
+          return delivery;
         } catch {
           set({ activeDelivery: null });
           return null;
@@ -103,6 +117,7 @@ export const useDriverStore = create(
       fetchDeliveryHistory: async () => {
         try {
           const res = await api.get("/delivery/driver/history");
+          // Backend returns { count, deliveries: [...] }
           const deliveries = res.data?.deliveries || res.data || [];
           set({ deliveryHistory: Array.isArray(deliveries) ? deliveries : [] });
         } catch {}
@@ -110,7 +125,8 @@ export const useDriverStore = create(
 
       confirmPickup: async () => {
         const res = await api.post("/delivery/pickup");
-        set({ activeDelivery: res.data.delivery });
+        const delivery = res.data?.delivery || res.data;
+        set({ activeDelivery: delivery });
         return res.data;
       },
 

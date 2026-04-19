@@ -1,17 +1,24 @@
 import { create } from "zustand";
 import api from "../api/axios";
 
-export const useOrderStore = create((set, get) => ({
+export const useOrderStore = create((set) => ({
   orders: [],
   currentOrder: null,
   loading: false,
 
   placeOrder: async (addressObj) => {
-    const addressStr = [addressObj.street, addressObj.city, addressObj.state, addressObj.pincode].filter(Boolean).join(", ");
+    // Build deliverAddress from address object fields
+    const addressStr = [
+      addressObj.street,
+      addressObj.city,
+      addressObj.state,
+      addressObj.pincode,
+    ].filter(Boolean).join(", ");
+
     const payload = {
-        deliveryAddressId: String(addressObj.addressId),
-        deliverAddress: addressStr,
-        specialInstructions: "Leave securely at the door"
+      deliveryAddressId: String(addressObj.addressId || ""),
+      deliverAddress: addressStr,
+      specialInstructions: "",
     };
     const res = await api.post("/orders/place", payload);
     return res.data;
@@ -21,7 +28,7 @@ export const useOrderStore = create((set, get) => ({
     set({ loading: true });
     try {
       const res = await api.get("/orders/my");
-      set({ orders: res.data || [], loading: false });
+      set({ orders: Array.isArray(res.data) ? res.data : [], loading: false });
     } catch {
       set({ loading: false });
     }

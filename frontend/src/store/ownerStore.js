@@ -17,7 +17,7 @@ export const useOwnerStore = create((set, get) => ({
     set({ loading: true });
     try {
       const res = await api.get("/restaurants/my");
-      const list = Array.isArray(res.data) ? res.data : [res.data];
+      const list = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : []);
       set({ restaurants: list, loading: false });
       if (list.length > 0 && !get().currentRestaurant) {
         set({ currentRestaurant: list[0] });
@@ -29,26 +29,43 @@ export const useOwnerStore = create((set, get) => ({
     }
   },
 
-  selectRestaurant: (restaurant) => {
-    set({ currentRestaurant: restaurant });
-  },
+  selectRestaurant: (restaurant) => set({ currentRestaurant: restaurant }),
 
+  // BUG FIX #2: RestaurantRequest requires latitude + longitude (NotNull)
+  // Strip unknown fields, use only what backend accepts
   createRestaurant: async (data) => {
-    const res = await api.post("/restaurants", data);
-    set((s) => ({ restaurants: [...s.restaurants, res.data] }));
+    const payload = {
+      name: data.name,
+      description: data.description || "",
+      cuisineType: data.cuisineType,
+      address: data.address,
+      latitude: parseFloat(data.latitude) || 0,
+      longitude: parseFloat(data.longitude) || 0,
+      minOrderAmount: data.minOrderAmount ? parseFloat(data.minOrderAmount) : null,
+      phone: data.phone || "",
+      imageUrl: data.imageUrl || "",
+    };
+    const res = await api.post("/restaurants", payload);
+    set((s) => ({ restaurants: [...s.restaurants, res.data], currentRestaurant: res.data }));
     return res.data;
   },
 
   updateRestaurant: async (id, data) => {
-    const res = await api.put(`/restaurants/${id}`, data);
+    const payload = {
+      name: data.name,
+      description: data.description || "",
+      cuisineType: data.cuisineType,
+      address: data.address,
+      latitude: parseFloat(data.latitude) || 0,
+      longitude: parseFloat(data.longitude) || 0,
+      minOrderAmount: data.minOrderAmount ? parseFloat(data.minOrderAmount) : null,
+      phone: data.phone || "",
+      imageUrl: data.imageUrl || "",
+    };
+    const res = await api.put(`/restaurants/${id}`, payload);
     set((s) => ({
-      restaurants: s.restaurants.map((r) =>
-        r.restaurantId === id ? res.data : r
-      ),
-      currentRestaurant:
-        s.currentRestaurant?.restaurantId === id
-          ? res.data
-          : s.currentRestaurant,
+      restaurants: s.restaurants.map((r) => r.restaurantId === id ? res.data : r),
+      currentRestaurant: s.currentRestaurant?.restaurantId === id ? res.data : s.currentRestaurant,
     }));
     return res.data;
   },
@@ -56,13 +73,8 @@ export const useOwnerStore = create((set, get) => ({
   toggleOpen: async (restaurantId) => {
     const res = await api.patch(`/restaurants/${restaurantId}/toggle`);
     set((s) => ({
-      restaurants: s.restaurants.map((r) =>
-        r.restaurantId === restaurantId ? res.data : r
-      ),
-      currentRestaurant:
-        s.currentRestaurant?.restaurantId === restaurantId
-          ? res.data
-          : s.currentRestaurant,
+      restaurants: s.restaurants.map((r) => r.restaurantId === restaurantId ? res.data : r),
+      currentRestaurant: s.currentRestaurant?.restaurantId === restaurantId ? res.data : s.currentRestaurant,
     }));
     return res.data;
   },
@@ -76,8 +88,8 @@ export const useOwnerStore = create((set, get) => ({
         api.get(`/restaurants/${restaurantId}/menu/categories`),
       ]);
       set({
-        menuItems: items.data || [],
-        categories: cats.data || [],
+        menuItems: Array.isArray(items.data) ? items.data : [],
+        categories: Array.isArray(cats.data) ? cats.data : [],
         menuLoading: false,
       });
     } catch {
@@ -85,49 +97,54 @@ export const useOwnerStore = create((set, get) => ({
     }
   },
 
+  // BUG FIX #4: backend field is `isBestseller` not `isBestSeller`
   addMenuItem: async (restaurantId, data) => {
-    const res = await api.post(`/restaurants/${restaurantId}/menu/items`, data);
+    const payload = {
+      name: data.name,
+      description: data.description || "",
+      price: parseFloat(data.price),
+      categoryId: data.categoryId || null,
+      imageUrl: data.imageUrl || "",
+      isVeg: Boolean(data.isVeg),
+      isBestseller: Boolean(data.isBestseller || data.isBestSeller),
+    };
+    const res = await api.post(`/restaurants/${restaurantId}/menu/items`, payload);
     set((s) => ({ menuItems: [...s.menuItems, res.data] }));
     return res.data;
   },
 
   updateMenuItem: async (restaurantId, itemId, data) => {
-    const res = await api.put(
-      `/restaurants/${restaurantId}/menu/items/${itemId}`,
-      data
-    );
+    const payload = {
+      name: data.name,
+      description: data.description || "",
+      price: parseFloat(data.price),
+      categoryId: data.categoryId || null,
+      imageUrl: data.imageUrl || "",
+      isVeg: Boolean(data.isVeg),
+      isBestseller: Boolean(data.isBestseller || data.isBestSeller),
+    };
+    const res = await api.put(`/restaurants/${restaurantId}/menu/items/${itemId}`, payload);
     set((s) => ({
-      menuItems: s.menuItems.map((i) =>
-        i.itemId === itemId ? res.data : i
-      ),
+      menuItems: s.menuItems.map((i) => i.itemId === itemId ? res.data : i),
     }));
     return res.data;
   },
 
   toggleItemAvailability: async (restaurantId, itemId) => {
-    const res = await api.patch(
-      `/restaurants/${restaurantId}/menu/items/${itemId}/toggle`
-    );
+    const res = await api.patch(`/restaurants/${restaurantId}/menu/items/${itemId}/toggle`);
     set((s) => ({
-      menuItems: s.menuItems.map((i) =>
-        i.itemId === itemId ? res.data : i
-      ),
+      menuItems: s.menuItems.map((i) => i.itemId === itemId ? res.data : i),
     }));
     return res.data;
   },
 
   deleteMenuItem: async (restaurantId, itemId) => {
     await api.delete(`/restaurants/${restaurantId}/menu/items/${itemId}`);
-    set((s) => ({
-      menuItems: s.menuItems.filter((i) => i.itemId !== itemId),
-    }));
+    set((s) => ({ menuItems: s.menuItems.filter((i) => i.itemId !== itemId) }));
   },
 
   addCategory: async (restaurantId, data) => {
-    const res = await api.post(
-      `/restaurants/${restaurantId}/menu/categories`,
-      data
-    );
+    const res = await api.post(`/restaurants/${restaurantId}/menu/categories`, data);
     set((s) => ({ categories: [...s.categories, res.data] }));
     return res.data;
   },
@@ -137,7 +154,7 @@ export const useOwnerStore = create((set, get) => ({
     set({ ordersLoading: true });
     try {
       const res = await api.get(`/orders/restaurant/${restaurantId}`);
-      set({ orders: res.data || [], ordersLoading: false });
+      set({ orders: Array.isArray(res.data) ? res.data : [], ordersLoading: false });
     } catch {
       set({ ordersLoading: false });
     }
@@ -146,7 +163,7 @@ export const useOwnerStore = create((set, get) => ({
   fetchActiveOrders: async (restaurantId) => {
     try {
       const res = await api.get(`/orders/restaurant/${restaurantId}/active`);
-      set({ activeOrders: res.data || [] });
+      set({ activeOrders: Array.isArray(res.data) ? res.data : [] });
     } catch {}
   },
 
@@ -156,7 +173,6 @@ export const useOwnerStore = create((set, get) => ({
       null,
       { params: { prepTimeMins } }
     );
-    // Update order list
     set((s) => ({
       activeOrders: s.activeOrders.map((o) =>
         o.orderId === orderId ? { ...o, status: "ACCEPTED" } : o
