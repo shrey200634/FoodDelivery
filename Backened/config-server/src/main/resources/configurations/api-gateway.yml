@@ -29,8 +29,6 @@ spring:
           uri: lb://USER-SERVICE
           predicates:
             - Path=/api/v1/users/**
-          filters:
-            - AuthenticationFilter
 
         # ─── RESTAURANT SERVICE ────────────────────────
         - id: restaurant-service
