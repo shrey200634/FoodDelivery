@@ -5,12 +5,12 @@ import { useOwnerStore } from "../../store/ownerStore";
 import socketService from "../../services/socketService";
 import { notifyNewOrder } from "../../services/notificationService";
 
-const INK      = "#FFF5E6";
-const INK_SOFT = "rgba(255,245,230,0.65)";
-const INK_MUTED = "rgba(255,245,230,0.38)";
-const INK_HAIR = "rgba(255,245,230,0.08)";
-const CARD     = "rgba(255,255,255,0.05)";
-const CARD2    = "rgba(255,255,255,0.09)";
+const INK      = "#1C1208";
+const INK_SOFT = "rgba(28,18,8,0.6)";
+const INK_MUTED = "rgba(28,18,8,0.38)";
+const INK_HAIR = "rgba(28,18,8,0.07)";
+const CARD     = "#FFF9EE";
+const CARD2    = "#F5ECD8";
 const TC       = "#C0401E";
 const TC_SOFT  = "#DE6A40";
 const TC_DEEP  = "#8B2910";
@@ -19,17 +19,17 @@ const SAFFRON  = "#D4882A";
 const DANGER   = "#DC2626";
 
 const STATUS_META = {
-  PLACED:    { label: "New Order",  color: "#60A5FA", bg: "#1D4ED820" },
-  CREATED:   { label: "New Order",  color: "#60A5FA", bg: "#1D4ED820" },
-  ACCEPTED:  { label: "Accepted",   color: "#A78BFA", bg: "#6D28D920" },
-  CONFIRMED: { label: "Confirmed",  color: "#A78BFA", bg: "#6D28D920" },
-  PREPARING: { label: "Preparing",  color: "#FBB647", bg: "#D4882A20" },
-  READY:     { label: "Ready",      color: "#34D399", bg: "#15803D20" },
-  PICKED_UP: { label: "Picked Up",  color: TC_SOFT,   bg: `${TC}20`  },
-  OUT_FOR_DELIVERY: { label: "Out for Delivery", color: TC_SOFT, bg: `${TC}20` },
-  DELIVERED: { label: "Delivered",  color: "#34D399", bg: "#15803D20" },
-  COMPLETED: { label: "Completed",  color: "#34D399", bg: "#15803D20" },
-  CANCELLED: { label: "Cancelled",  color: "#FC8181", bg: "#DC262620" },
+  PLACED:    { label: "New Order",  color: TC,        bg: `${TC}12` },
+  CREATED:   { label: "New Order",  color: TC,        bg: `${TC}12` },
+  ACCEPTED:  { label: "Accepted",   color: "#7C3AED", bg: "#7C3AED12" },
+  CONFIRMED: { label: "Confirmed",  color: "#7C3AED", bg: "#7C3AED12" },
+  PREPARING: { label: "Preparing",  color: SAFFRON,   bg: `${SAFFRON}12` },
+  READY:     { label: "Ready",      color: SUCCESS,   bg: `${SUCCESS}12` },
+  PICKED_UP: { label: "Picked Up",  color: TC_SOFT,   bg: `${TC}12`  },
+  OUT_FOR_DELIVERY: { label: "Out for Delivery", color: TC_SOFT, bg: `${TC}12` },
+  DELIVERED: { label: "Delivered",  color: SUCCESS,   bg: `${SUCCESS}12` },
+  COMPLETED: { label: "Completed",  color: SUCCESS,   bg: `${SUCCESS}12` },
+  CANCELLED: { label: "Cancelled",  color: DANGER,    bg: `${DANGER}12` },
 };
 
 const NEXT = {
@@ -133,7 +133,7 @@ export default function OwnerOrders() {
       {newAlert && (
         <div style={{ background: `linear-gradient(135deg, ${TC_SOFT}, ${TC})`, borderRadius: 14,
           padding: "14px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12,
-          animation: "slide-in 0.3s ease-out", boxShadow: `0 4px 20px ${TC}50` }}>
+          animation: "slide-in 0.3s ease-out", boxShadow: `0 4px 20px ${TC}40` }}>
           <Bell size={20} style={{ color: "#FFF5E6" }} />
           <span style={{ color: "#FFF5E6", fontWeight: 700, fontSize: "0.95rem" }}>
             🔔 New order just came in!
@@ -153,8 +153,8 @@ export default function OwnerOrders() {
         ].map(({ id, label }) => (
           <button key={id} onClick={() => setTab(id)} style={{ padding: "9px 20px", borderRadius: 999,
             border: `1.5px solid ${tab === id ? TC : INK_HAIR}`,
-            background: tab === id ? `${TC}20` : "transparent",
-            color: tab === id ? TC_SOFT : INK_MUTED,
+            background: tab === id ? `${TC}12` : "transparent",
+            color: tab === id ? TC : INK_MUTED,
             fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
             fontFamily: "var(--font-sans)", transition: "all 0.15s" }}>
             {label}
@@ -175,8 +175,8 @@ export default function OwnerOrders() {
 
                 return (
                   <div key={order.orderId} style={{ background: CARD, borderRadius: 20,
-                    padding: "22px 24px", border: `1px solid ${isNew ? TC + "50" : INK_HAIR}`,
-                    boxShadow: isNew ? `0 0 0 1px ${TC}30, 0 8px 32px rgba(0,0,0,0.2)` : "none",
+                    padding: "22px 24px", border: `1px solid ${isNew ? TC + "40" : INK_HAIR}`,
+                    boxShadow: isNew ? `0 0 0 1px ${TC}20, 0 4px 20px rgba(192,64,30,0.1)` : "none",
                     animation: "slide-in 0.3s ease-out" }}>
 
                     {/* Order header */}
@@ -187,8 +187,8 @@ export default function OwnerOrders() {
                             Order #{order.orderId?.slice(-6).toUpperCase()}
                           </span>
                           {isNew && (
-                            <span style={{ padding: "2px 8px", borderRadius: 4, background: `${TC}25`,
-                              color: TC_SOFT, fontSize: "0.6rem", fontWeight: 800, textTransform: "uppercase",
+                            <span style={{ padding: "2px 8px", borderRadius: 4, background: `${TC}18`,
+                              color: TC, fontSize: "0.6rem", fontWeight: 800, textTransform: "uppercase",
                               letterSpacing: "0.1em", animation: "pulse-badge 1.5s infinite" }}>
                               NEW
                             </span>
@@ -211,7 +211,7 @@ export default function OwnerOrders() {
                           borderBottom: i < order.items.length - 1 ? `1px solid ${INK_HAIR}` : "none",
                           fontSize: "0.88rem" }}>
                           <span style={{ color: INK }}>
-                            <span style={{ color: TC_SOFT, fontWeight: 700, marginRight: 6 }}>{item.quantity}×</span>
+                            <span style={{ color: TC, fontWeight: 700, marginRight: 6 }}>{item.quantity}×</span>
                             {item.itemName || item.name}
                           </span>
                           <span style={{ color: INK_MUTED }}>₹{parseFloat(item.price || 0) * item.quantity}</span>
@@ -221,7 +221,7 @@ export default function OwnerOrders() {
                         fontSize: "0.95rem", fontWeight: 700, color: INK, marginTop: 12,
                         paddingTop: 12, borderTop: `1px solid ${INK_HAIR}` }}>
                         <span>Total</span>
-                        <span style={{ color: TC_SOFT }}>₹{parseFloat(order.totalAmount || 0).toFixed(0)}</span>
+                        <span style={{ color: TC }}>₹{parseFloat(order.totalAmount || 0).toFixed(0)}</span>
                       </div>
                     </div>
 
@@ -253,8 +253,8 @@ export default function OwnerOrders() {
                       )}
                       {isNew && (
                         <button onClick={() => handleStatus(order.orderId, "CANCELLED")} disabled={busy}
-                          style={{ padding: "12px 16px", borderRadius: 12, border: "1px solid #DC262630",
-                            background: "#DC262615", color: "#FC8181", fontWeight: 600, fontSize: "0.88rem",
+                          style={{ padding: "12px 16px", borderRadius: 12, border: "1px solid #DC262625",
+                            background: "#DC262608", color: DANGER, fontWeight: 600, fontSize: "0.88rem",
                             cursor: "pointer", fontFamily: "var(--font-sans)", display: "flex",
                             alignItems: "center", gap: 6 }}>
                           <XCircle size={15} /> Reject
@@ -292,7 +292,7 @@ export default function OwnerOrders() {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                       <span style={{ fontFamily: "var(--font-display)", fontSize: "1rem",
-                        color: order.status === "CANCELLED" ? INK_MUTED : TC_SOFT }}>
+                        color: order.status === "CANCELLED" ? INK_MUTED : TC }}>
                         ₹{parseFloat(order.totalAmount || 0).toFixed(0)}
                       </span>
                       <span style={{ padding: "4px 12px", borderRadius: 999, background: meta.bg,
@@ -317,12 +317,12 @@ export default function OwnerOrders() {
 function EmptyOrders() {
   return (
     <div style={{ textAlign: "center", padding: "80px 24px",
-      border: `1.5px dashed rgba(255,245,230,0.12)`, borderRadius: 20 }}>
-      <ShoppingBag size={40} style={{ color: "rgba(255,245,230,0.2)", margin: "0 auto 16px", display: "block" }} />
-      <h3 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#FFF5E6", marginBottom: 8 }}>
+      border: `1.5px dashed rgba(28,18,8,0.1)`, borderRadius: 20 }}>
+      <ShoppingBag size={40} style={{ color: "rgba(28,18,8,0.15)", margin: "0 auto 16px", display: "block" }} />
+      <h3 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1C1208", marginBottom: 8 }}>
         No active orders
       </h3>
-      <p style={{ fontSize: "0.88rem", color: "rgba(255,245,230,0.38)" }}>
+      <p style={{ fontSize: "0.88rem", color: "rgba(28,18,8,0.38)" }}>
         New orders will appear here instantly via live connection
       </p>
     </div>

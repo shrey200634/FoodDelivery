@@ -7,11 +7,13 @@ import {
 import { useAuthStore } from "../store/authStore";
 import { useOwnerStore } from "../store/ownerStore";
 
-const SIDEBAR = "#161210";
-const BORDER  = "rgba(255,255,255,0.07)";
-const MUTED   = "rgba(255,255,255,0.38)";
-const SOFT    = "rgba(255,255,255,0.65)";
-const WHITE   = "#FFF5E6";
+/* ── Light-theme palette (matching Customer / Driver) ── */
+const BG      = "#FEFCF8";
+const SIDEBAR_BG = "#FFF9EE";
+const BORDER  = "rgba(28,18,8,0.07)";
+const MUTED   = "rgba(28,18,8,0.38)";
+const SOFT    = "rgba(28,18,8,0.6)";
+const INK     = "#1C1208";
 const TC      = "#C0401E";
 const TC_SOFT = "#DE6A40";
 const SUCCESS = "#15803D";
@@ -46,10 +48,10 @@ export default function OwnerLayout() {
           background:`linear-gradient(135deg,${TC_SOFT},${TC})`,
           display:"flex", alignItems:"center", justifyContent:"center",
           fontFamily:"var(--font-display)", fontSize:"1.2rem", fontWeight:700,
-          color:WHITE, fontStyle:"italic" }}>f</div>
+          color:"#FFF5E6", fontStyle:"italic" }}>f</div>
         {(!collapsed || mobile) && (
           <div style={{ overflow:"hidden" }}>
-            <div style={{ fontFamily:"var(--font-display)", fontSize:"1.1rem", color:WHITE,
+            <div style={{ fontFamily:"var(--font-display)", fontSize:"1.1rem", color:INK,
               letterSpacing:"-0.01em", lineHeight:1 }}>
               foodrush<span style={{ color:TC }}>.</span>
             </div>
@@ -73,7 +75,7 @@ export default function OwnerLayout() {
             <>
               <div style={{ fontSize:"0.62rem", color:MUTED, textTransform:"uppercase",
                 letterSpacing:"0.12em", fontWeight:700, marginBottom:4 }}>Active Restaurant</div>
-              <div style={{ fontSize:"0.88rem", color:WHITE, fontWeight:600,
+              <div style={{ fontSize:"0.88rem", color:INK, fontWeight:600,
                 overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {currentRestaurant.name}
               </div>
@@ -102,14 +104,14 @@ export default function OwnerLayout() {
               padding: collapsed && !mobile ? "12px 0" : "11px 12px",
               justifyContent: collapsed && !mobile ? "center" : "flex-start",
               borderRadius:10, marginBottom:2, textDecoration:"none",
-              background: isActive ? `${TC}18` : "transparent",
-              color: isActive ? TC_SOFT : SOFT,
+              background: isActive ? `${TC}12` : "transparent",
+              color: isActive ? TC : SOFT,
               fontFamily:"var(--font-sans)", fontSize:"0.88rem", fontWeight:600,
               transition:"all 0.15s",
-              border:`1px solid ${isActive ? TC + "30" : "transparent"}`,
+              border:`1px solid ${isActive ? TC + "25" : "transparent"}`,
             })}>
             {({ isActive }) => (<>
-              <Icon size={18} style={{ flexShrink:0, color: isActive ? TC_SOFT : MUTED }} />
+              <Icon size={18} style={{ flexShrink:0, color: isActive ? TC : MUTED }} />
               {(!collapsed || mobile) && label}
             </>)}
           </NavLink>
@@ -120,15 +122,15 @@ export default function OwnerLayout() {
       <div style={{ padding:"12px 8px", borderTop:`1px solid ${BORDER}` }}>
         {(!collapsed || mobile) && (
           <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px",
-            borderRadius:10, marginBottom:6, background:"rgba(255,255,255,0.04)" }}>
+            borderRadius:10, marginBottom:6, background:"rgba(28,18,8,0.03)" }}>
             <div style={{ width:32, height:32, borderRadius:"50%",
               background:`linear-gradient(135deg,${TC_SOFT},${TC})`,
               display:"flex", alignItems:"center", justifyContent:"center",
-              color:WHITE, fontSize:"0.82rem", fontWeight:700, flexShrink:0 }}>
+              color:"#FFF5E6", fontSize:"0.82rem", fontWeight:700, flexShrink:0 }}>
               {user?.name?.charAt(0)?.toUpperCase() || "O"}
             </div>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:"0.82rem", color:WHITE, fontWeight:600,
+              <div style={{ fontSize:"0.82rem", color:INK, fontWeight:600,
                 overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {user?.name || "Owner"}
               </div>
@@ -140,9 +142,9 @@ export default function OwnerLayout() {
           gap:10, padding: collapsed && !mobile ? "12px 0" : "10px 12px",
           justifyContent: collapsed && !mobile ? "center" : "flex-start",
           borderRadius:10, border:"none", background:"transparent", cursor:"pointer",
-          color:"#FC8181", fontFamily:"var(--font-sans)", fontSize:"0.85rem", fontWeight:600,
+          color:"#DC2626", fontFamily:"var(--font-sans)", fontSize:"0.85rem", fontWeight:600,
           transition:"background 0.15s" }}
-          onMouseEnter={e => e.currentTarget.style.background = "rgba(252,129,129,0.1)"}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(220,38,38,0.06)"}
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
           <LogOut size={16} style={{ flexShrink:0 }} />
           {(!collapsed || mobile) && "Sign out"}
@@ -152,9 +154,9 @@ export default function OwnerLayout() {
   );
 
   return (
-    <div style={{ display:"flex", minHeight:"100vh", background:"#0F0D0B" }}>
+    <div style={{ display:"flex", minHeight:"100vh", background:BG }}>
       {/* Desktop sidebar */}
-      <aside className="hide-mobile" style={{ width: collapsed ? 72 : 240, background:SIDEBAR,
+      <aside className="hide-mobile" style={{ width: collapsed ? 72 : 240, background:SIDEBAR_BG,
         borderRight:`1px solid ${BORDER}`, display:"flex", flexDirection:"column",
         height:"100vh", flexShrink:0, transition:"width 0.25s ease",
         position:"sticky", top:0 }}>
@@ -165,9 +167,9 @@ export default function OwnerLayout() {
       {mobileOpen && (
         <>
           <div onClick={() => setMobileOpen(false)} style={{ position:"fixed", inset:0,
-            background:"rgba(0,0,0,0.6)", zIndex:299, backdropFilter:"blur(4px)" }} />
+            background:"rgba(0,0,0,0.3)", zIndex:299, backdropFilter:"blur(4px)" }} />
           <aside style={{ position:"fixed", top:0, left:0, width:280, height:"100vh",
-            background:SIDEBAR, borderRight:`1px solid ${BORDER}`,
+            background:SIDEBAR_BG, borderRight:`1px solid ${BORDER}`,
             display:"flex", flexDirection:"column", zIndex:300 }}>
             <SidebarContent mobile />
           </aside>
@@ -177,14 +179,14 @@ export default function OwnerLayout() {
       {/* Main */}
       <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0, overflow:"hidden" }}>
         {/* Mobile top bar */}
-        <div className="hide-desktop" style={{ height:56, background:SIDEBAR,
+        <div className="hide-desktop" style={{ height:56, background:SIDEBAR_BG,
           borderBottom:`1px solid ${BORDER}`, display:"flex", alignItems:"center",
           padding:"0 16px", gap:12 }}>
           <button onClick={() => setMobileOpen(true)} style={{ background:"none", border:"none",
             cursor:"pointer", color:SOFT, display:"flex", padding:4 }}>
             <Menu size={22} />
           </button>
-          <div style={{ fontFamily:"var(--font-display)", fontSize:"1.1rem", color:WHITE }}>
+          <div style={{ fontFamily:"var(--font-display)", fontSize:"1.1rem", color:INK }}>
             {currentRestaurant?.name || "Owner Dashboard"}
           </div>
         </div>

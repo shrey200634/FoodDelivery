@@ -2,9 +2,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "../api/axios";
 
-// BUG FIX #6: DriverResponse.status is "AVAILABLE"|"OFFLINE"|"ON_DELIVERY"
-// There's no `available` boolean — we derive isOnline from status
-const isAvailable = (profile) => profile?.status === "AVAILABLE";
+// Backend DriverStatus enum: OFFLINE, ONLINE, ASSIGNED, PICKED_UP, DELIVERING
+// Backend DeliveryStatus enum: PENDING, DRIVER_ASSIGNED, PICKED_UP, IN_TRANSIT, DELIVERED, CANCELLED, FAILED
+const isOnlineStatus = (profile) =>
+  profile?.status === "ONLINE" || profile?.status === "ASSIGNED" || profile?.status === "PICKED_UP" || profile?.status === "DELIVERING";
 
 export const useDriverStore = create(
   persist(
@@ -24,7 +25,7 @@ export const useDriverStore = create(
           const profile = res.data;
           set({
             driverProfile: profile,
-            isOnline: isAvailable(profile),
+            isOnline: isOnlineStatus(profile),
             loading: false,
           });
           return profile;
@@ -34,41 +35,51 @@ export const useDriverStore = create(
         }
       },
 
-      // BUG FIX #5: backend expects `vehicleNum` not `vehicleNumber`
-      // Also requires name + phone (from user profile ideally)
       registerDriver: async (data) => {
         const payload = {
           name: data.name,
           phone: data.phone,
           vehicleType: data.vehicleType,
-          vehicleNum: data.vehicleNumber || data.vehicleNum, // accept both
+          vehicleNum: data.vehicleNumber || data.vehicleNum,
         };
         const res = await api.post("/driver/register", payload);
-        // Response: { message, driver: DriverResponse }
         const profile = res.data?.driver || res.data;
-        set({ driverProfile: profile, isOnline: isAvailable(profile) });
+        set({ driverProfile: profile, isOnline: isOnlineStatus(profile) });
         return res.data;
       },
 
       goOnline: async (latitude, longitude) => {
-        const res = await api.post("/driver/go-online", null, {
-          params: { latitude, longitude },
-        });
-        const profile = res.data?.driver || res.data;
-        set({ isOnline: true, driverProfile: profile });
-        return res.data;
+        // Set optimistically first to prevent UI flicker
+        set({ isOnline: true });
+        try {
+          const res = await api.post("/driver/go-online", null, {
+            params: { latitude, longitude },
+          });
+          const profile = res.data?.driver || res.data;
+          set({ isOnline: true, driverProfile: profile });
+          return res.data;
+        } catch (err) {
+          set({ isOnline: false }); // Revert on failure
+          throw err;
+        }
       },
 
       goOffline: async () => {
-        const res = await api.post("/driver/go-offline");
-        const profile = res.data?.driver || res.data;
-        set({ isOnline: false, driverProfile: profile });
-        const watchId = get().locationWatchId;
-        if (watchId) {
-          navigator.geolocation.clearWatch(watchId);
-          set({ locationWatchId: null });
+        set({ isOnline: false }); // Optimistic
+        try {
+          const res = await api.post("/driver/go-offline");
+          const profile = res.data?.driver || res.data;
+          set({ isOnline: false, driverProfile: profile });
+          const watchId = get().locationWatchId;
+          if (watchId) {
+            navigator.geolocation.clearWatch(watchId);
+            set({ locationWatchId: null });
+          }
+          return res.data;
+        } catch (err) {
+          set({ isOnline: true }); // Revert on failure
+          throw err;
         }
-        return res.data;
       },
 
       updateLocation: async (latitude, longitude) => {
@@ -82,6 +93,10 @@ export const useDriverStore = create(
 
       startLocationTracking: () => {
         if (!navigator.geolocation) return;
+        // Clear existing watch before creating new one
+        const existingId = get().locationWatchId;
+        if (existingId) navigator.geolocation.clearWatch(existingId);
+
         const watchId = navigator.geolocation.watchPosition(
           (pos) => {
             const { latitude, longitude } = pos.coords;
@@ -101,14 +116,20 @@ export const useDriverStore = create(
         }
       },
 
+      // Fetch active delivery — backend throws 500 if none exists, so handle gracefully
       fetchActiveDelivery: async () => {
         try {
           const res = await api.get("/delivery/driver/active");
-          // Response can be a single DeliveryResponse or wrapped
           const delivery = res.data?.delivery || res.data;
-          set({ activeDelivery: delivery?.deliveryId ? delivery : null });
-          return delivery;
+          // Only set if it's a valid delivery object (has deliveryId)
+          if (delivery && delivery.deliveryId) {
+            set({ activeDelivery: delivery });
+            return delivery;
+          }
+          set({ activeDelivery: null });
+          return null;
         } catch {
+          // 404/500 means no active delivery — that's OK
           set({ activeDelivery: null });
           return null;
         }
@@ -117,7 +138,6 @@ export const useDriverStore = create(
       fetchDeliveryHistory: async () => {
         try {
           const res = await api.get("/delivery/driver/history");
-          // Backend returns { count, deliveries: [...] }
           const deliveries = res.data?.deliveries || res.data || [];
           set({ deliveryHistory: Array.isArray(deliveries) ? deliveries : [] });
         } catch {}

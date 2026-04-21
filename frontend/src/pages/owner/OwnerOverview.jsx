@@ -5,12 +5,12 @@ import toast from "react-hot-toast";
 import { useOwnerStore } from "../../store/ownerStore";
 import { useAuthStore } from "../../store/authStore";
 
-const INK      = "#FFF5E6";
-const INK_SOFT = "rgba(255,245,230,0.65)";
-const INK_MUTED = "rgba(255,245,230,0.38)";
-const INK_HAIR = "rgba(255,245,230,0.08)";
-const CARD     = "rgba(255,255,255,0.05)";
-const CARD2    = "rgba(255,255,255,0.08)";
+const INK      = "#1C1208";
+const INK_SOFT = "rgba(28,18,8,0.6)";
+const INK_MUTED = "rgba(28,18,8,0.38)";
+const INK_HAIR = "rgba(28,18,8,0.07)";
+const CARD     = "#FFF9EE";
+const CARD2    = "#F5ECD8";
 const TC       = "#C0401E";
 const TC_SOFT  = "#DE6A40";
 const SUCCESS  = "#15803D";
@@ -122,7 +122,7 @@ export default function OwnerOverview() {
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:16, marginBottom:36 }}>
         {[
           { label:"Revenue Today",  value:`₹${revenue.toFixed(0)}`,  Icon:TrendingUp, color:SAFFRON,  sub:`${delivered.length} orders delivered` },
-          { label:"Active Orders",  value:active.length,              Icon:Clock,      color:"#A78BFA", sub:"Need attention" },
+          { label:"Active Orders",  value:active.length,              Icon:Clock,      color:"#7C3AED", sub:"Need attention" },
           { label:"Total Orders",   value:orders.length,              Icon:ShoppingBag,color:TC_SOFT,  sub:`${cancelled.length} cancelled` },
           { label:"Menu Items",     value:menuItems.length,           Icon:ChefHat,    color:PISTACHIO, sub:r?.isPureVeg ? "Pure Veg ✓" : "Veg + Non-veg" },
         ].map((s, i) => (
@@ -130,7 +130,7 @@ export default function OwnerOverview() {
             border:`1px solid ${INK_HAIR}`,
             animation:`fade-up 0.4s ease-out ${i * 0.07}s both` }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16 }}>
-              <div style={{ width:40, height:40, borderRadius:12, background:`${s.color}20`,
+              <div style={{ width:40, height:40, borderRadius:12, background:`${s.color}15`,
                 display:"flex", alignItems:"center", justifyContent:"center" }}>
                 <s.Icon size={18} style={{ color:s.color }} />
               </div>
@@ -168,13 +168,13 @@ export default function OwnerOverview() {
                 <div key={order.orderId} style={{ display:"flex", alignItems:"center",
                   justifyContent:"space-between", padding:"12px 16px",
                   background:CARD2, borderRadius:12,
-                  border:`1px solid ${["PLACED","CREATED"].includes(order.status) ? TC + "40" : INK_HAIR}` }}>
+                  border:`1px solid ${["PLACED","CREATED"].includes(order.status) ? TC + "30" : INK_HAIR}` }}>
                   <div>
                     <div style={{ fontSize:"0.88rem", fontWeight:700, color:INK }}>
                       #{order.orderId?.slice(-6).toUpperCase()}
                       {["PLACED","CREATED"].includes(order.status) && (
-                        <span style={{ marginLeft:8, fontSize:"0.62rem", background:`${TC}20`,
-                          color:TC_SOFT, padding:"2px 7px", borderRadius:4,
+                        <span style={{ marginLeft:8, fontSize:"0.62rem", background:`${TC}18`,
+                          color:TC, padding:"2px 7px", borderRadius:4,
                           fontWeight:800, textTransform:"uppercase" }}>NEW</span>
                       )}
                     </div>
@@ -231,14 +231,14 @@ export default function OwnerOverview() {
 
 function StatusPill({ status }) {
   const MAP = {
-    PLACED:    { label:"New",      bg:"#1D4ED820", color:"#60A5FA" },
-    CREATED:   { label:"New",      bg:"#1D4ED820", color:"#60A5FA" },
-    CONFIRMED: { label:"Accepted", bg:"#6D28D920", color:"#A78BFA" },
-    ACCEPTED:  { label:"Accepted", bg:"#6D28D920", color:"#A78BFA" },
-    PREPARING: { label:"Cooking",  bg:"#D4882A20", color:"#FBB647" },
-    READY:     { label:"Ready",    bg:"#15803D20", color:"#34D399" },
+    PLACED:    { label:"New",      bg:`${TC}12`, color:TC },
+    CREATED:   { label:"New",      bg:`${TC}12`, color:TC },
+    CONFIRMED: { label:"Accepted", bg:"#7C3AED15", color:"#7C3AED" },
+    ACCEPTED:  { label:"Accepted", bg:"#7C3AED15", color:"#7C3AED" },
+    PREPARING: { label:"Cooking",  bg:`${SAFFRON}15`, color:SAFFRON },
+    READY:     { label:"Ready",    bg:`${SUCCESS}15`, color:SUCCESS },
   };
-  const m = MAP[status] || { label:status, bg:"rgba(255,255,255,0.1)", color:"#FFF5E6" };
+  const m = MAP[status] || { label:status, bg:"rgba(28,18,8,0.06)", color:"#1C1208" };
   return (
     <span style={{ padding:"4px 12px", borderRadius:999,
       background:m.bg, color:m.color, fontSize:"0.72rem", fontWeight:700 }}>

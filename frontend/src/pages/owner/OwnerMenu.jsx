@@ -3,12 +3,12 @@ import toast from "react-hot-toast";
 import { Plus, Edit2, Trash2, Eye, EyeOff, Loader2, ChefHat, X, PlusCircle } from "lucide-react";
 import { useOwnerStore } from "../../store/ownerStore";
 
-const INK      = "#FFF5E6";
-const INK_SOFT = "rgba(255,245,230,0.65)";
-const INK_MUTED = "rgba(255,245,230,0.38)";
-const INK_HAIR = "rgba(255,245,230,0.08)";
-const CARD     = "rgba(255,255,255,0.05)";
-const CARD2    = "rgba(255,255,255,0.09)";
+const INK      = "#1C1208";
+const INK_SOFT = "rgba(28,18,8,0.6)";
+const INK_MUTED = "rgba(28,18,8,0.38)";
+const INK_HAIR = "rgba(28,18,8,0.07)";
+const CARD     = "#FFF9EE";
+const CARD2    = "#F5ECD8";
 const TC       = "#C0401E";
 const TC_SOFT  = "#DE6A40";
 const SUCCESS  = "#15803D";
@@ -92,8 +92,8 @@ export default function OwnerMenu() {
           <button key={cat.categoryId} onClick={() => setFilterCat(cat.categoryId)} style={{
             padding: "7px 16px", borderRadius: 999, border: `1px solid`,
             borderColor: filterCat === cat.categoryId ? TC : INK_HAIR,
-            background: filterCat === cat.categoryId ? `${TC}20` : "transparent",
-            color: filterCat === cat.categoryId ? TC_SOFT : INK_MUTED,
+            background: filterCat === cat.categoryId ? `${TC}12` : "transparent",
+            color: filterCat === cat.categoryId ? TC : INK_MUTED,
             fontSize: "0.82rem", fontWeight: 600, cursor: "pointer",
             fontFamily: "var(--font-sans)", transition: "all 0.15s" }}>
             {cat.name}
@@ -169,7 +169,7 @@ export default function OwnerMenu() {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14 }}>
-                  <span style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: TC_SOFT }}>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: TC }}>
                     ₹{parseFloat(item.price || 0).toFixed(0)}
                   </span>
                   <div style={{ display: "flex", gap: 6 }}>
@@ -182,8 +182,8 @@ export default function OwnerMenu() {
                       {busyIds[item.itemId]
                         ? <Loader2 size={13} style={{ color: INK_MUTED, animation: "spin 1s linear infinite" }} />
                         : item.isAvailable === false
-                          ? <EyeOff size={13} style={{ color: "#FC8181" }} />
-                          : <Eye size={13} style={{ color: "#34D399" }} />}
+                          ? <EyeOff size={13} style={{ color: DANGER }} />
+                          : <Eye size={13} style={{ color: SUCCESS }} />}
                     </button>
                     {/* Edit */}
                     <button onClick={() => { setEditItem(item); setShowItemModal(true); }}
@@ -193,9 +193,9 @@ export default function OwnerMenu() {
                     </button>
                     {/* Delete */}
                     <button onClick={() => handleDelete(item)}
-                      style={{ width: 34, height: 34, borderRadius: 8, border: "1px solid #DC262630",
-                        background: "#DC262615", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Trash2 size={13} style={{ color: "#FC8181" }} />
+                      style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${DANGER}20`,
+                        background: `${DANGER}08`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Trash2 size={13} style={{ color: DANGER }} />
                     </button>
                   </div>
                 </div>
@@ -234,18 +234,18 @@ export default function OwnerMenu() {
 
 function Modal({ title, onClose, children }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000,
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000,
       display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
       backdropFilter: "blur(6px)" }}>
-      <div style={{ background: "#1A1612", borderRadius: 20, padding: "28px", width: "100%",
-        maxWidth: 480, maxHeight: "90vh", overflowY: "auto", border: "1px solid rgba(255,245,230,0.1)",
-        boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}>
+      <div style={{ background: "#FFFBF5", borderRadius: 20, padding: "28px", width: "100%",
+        maxWidth: 480, maxHeight: "90vh", overflowY: "auto", border: `1px solid ${INK_HAIR}`,
+        boxShadow: "0 24px 60px rgba(0,0,0,0.15)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
-          <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 500, color: "#FFF5E6" }}>{title}</h3>
+          <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 500, color: INK }}>{title}</h3>
           <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8,
-            border: "1px solid rgba(255,245,230,0.1)", background: "rgba(255,255,255,0.05)",
+            border: `1px solid ${INK_HAIR}`, background: "rgba(28,18,8,0.03)",
             cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <X size={14} style={{ color: "rgba(255,245,230,0.5)" }} />
+            <X size={14} style={{ color: INK_MUTED }} />
           </button>
         </div>
         {children}
@@ -258,13 +258,13 @@ function Field({ label, value, onChange, type = "text", placeholder }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase",
-        letterSpacing: "0.1em", color: "rgba(255,245,230,0.4)", marginBottom: 6 }}>{label}</label>
+        letterSpacing: "0.1em", color: INK_MUTED, marginBottom: 6 }}>{label}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ width: "100%", padding: "11px 14px", background: "rgba(255,255,255,0.06)", borderRadius: 10,
-          border: "1px solid rgba(255,245,230,0.1)", fontSize: "0.9rem", color: "#FFF5E6",
+        style={{ width: "100%", padding: "11px 14px", background: "#F5ECD8", borderRadius: 10,
+          border: `1.5px solid transparent`, fontSize: "0.9rem", color: INK,
           fontFamily: "var(--font-sans)", outline: "none", boxSizing: "border-box", transition: "border-color 0.2s" }}
         onFocus={e => e.target.style.borderColor = "#DE6A40"}
-        onBlur={e => e.target.style.borderColor = "rgba(255,245,230,0.1)"} />
+        onBlur={e => e.target.style.borderColor = "transparent"} />
     </div>
   );
 }
@@ -295,10 +295,10 @@ function ItemModal({ item, categories, rid, onClose, onSave }) {
         <Field label="Price (₹)" value={form.price} onChange={set("price")} type="number" placeholder="0" />
         <div>
           <label style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase",
-            letterSpacing: "0.1em", color: "rgba(255,245,230,0.4)", marginBottom: 6 }}>Category</label>
+            letterSpacing: "0.1em", color: INK_MUTED, marginBottom: 6 }}>Category</label>
           <select value={form.categoryId} onChange={e => setForm(p => ({ ...p, categoryId: e.target.value }))}
-            style={{ width: "100%", padding: "11px 12px", background: "rgba(255,255,255,0.06)", borderRadius: 10,
-              border: "1px solid rgba(255,245,230,0.1)", fontSize: "0.88rem", color: "#FFF5E6",
+            style={{ width: "100%", padding: "11px 12px", background: "#F5ECD8", borderRadius: 10,
+              border: "1.5px solid transparent", fontSize: "0.88rem", color: INK,
               fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}>
             <option value="">No category</option>
             {categories.map(c => <option key={c.categoryId} value={c.categoryId}>{c.name}</option>)}
@@ -309,17 +309,17 @@ function ItemModal({ item, categories, rid, onClose, onSave }) {
       <div style={{ display: "flex", gap: 20, marginBottom: 20 }}>
         <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
           <input type="checkbox" checked={form.isVeg} onChange={e => setForm(p => ({ ...p, isVeg: e.target.checked }))} />
-          <span style={{ fontSize: "0.85rem", color: "#FFF5E6" }}>Vegetarian 🌿</span>
+          <span style={{ fontSize: "0.85rem", color: INK }}>Vegetarian 🌿</span>
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
           <input type="checkbox" checked={form.isBestSeller} onChange={e => setForm(p => ({ ...p, isBestSeller: e.target.checked }))} />
-          <span style={{ fontSize: "0.85rem", color: "#FFF5E6" }}>Bestseller 🔥</span>
+          <span style={{ fontSize: "0.85rem", color: INK }}>Bestseller 🔥</span>
         </label>
       </div>
       <div style={{ display: "flex", gap: 10 }}>
         <button onClick={onClose} style={{ flex: 1, padding: "11px", borderRadius: 10,
-          border: "1px solid rgba(255,245,230,0.12)", background: "transparent",
-          color: "rgba(255,245,230,0.5)", fontSize: "0.88rem", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+          border: `1px solid ${INK_HAIR}`, background: "transparent",
+          color: INK_MUTED, fontSize: "0.88rem", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
           Cancel
         </button>
         <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: "11px", borderRadius: 10,
@@ -343,8 +343,8 @@ function CatModal({ rid, onClose, onSave }) {
       <Field label="Category Name" value={name} onChange={setName} placeholder="e.g. Starters, Mains, Desserts" />
       <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
         <button onClick={onClose} style={{ flex: 1, padding: "10px", borderRadius: 10,
-          border: "1px solid rgba(255,245,230,0.12)", background: "transparent",
-          color: "rgba(255,245,230,0.5)", fontSize: "0.88rem", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+          border: `1px solid ${INK_HAIR}`, background: "transparent",
+          color: INK_MUTED, fontSize: "0.88rem", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
           Cancel
         </button>
         <button onClick={async () => { if (!name) return; setSaving(true); await onSave({ name }).catch(() => {}); setSaving(false); }}
