@@ -130,6 +130,8 @@ public class SettlementService {
                         .platformFee(platformFee)
                         .restaurantPayout(restaurantPayout)
                         .settledAt(LocalDateTime.now())
+                        .userEmail(event.getUserEmail())
+                        .userName(event.getUserName())
                 .build());
         log.info("Settled orderId={}: total={}, platformFee={}, restaurantPayout={}, userBalance={}",
                 event.getOrderId(), amount, platformFee, restaurantPayout, wallet.getAvailableBalance());

@@ -21,4 +21,6 @@ public class DeliveryCompletedEvent {
     private BigDecimal distanceKm ;
     private Integer actualDeliveryMins;
     private LocalDateTime deliveredAt;
+    private String userEmail;
+    private String userName;
 }

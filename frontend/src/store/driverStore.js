@@ -18,6 +18,12 @@ export const useDriverStore = create(
       locationWatchId: null,
       loading: false,
 
+      clearProfile: () => {
+        set({ driverProfile: null, isOnline: false, activeDelivery: null, deliveryHistory: [] });
+        const watchId = get().locationWatchId;
+        if (watchId) navigator.geolocation.clearWatch(watchId);
+      },
+
       fetchProfile: async () => {
         set({ loading: true });
         try {

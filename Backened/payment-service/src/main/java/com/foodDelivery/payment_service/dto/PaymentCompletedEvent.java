@@ -21,5 +21,7 @@ public class PaymentCompletedEvent {
     private BigDecimal platformFee;
     private  BigDecimal restaurantPayout ;
     private LocalDateTime settledAt;
+    private String userEmail;
+    private String userName;
 
 }

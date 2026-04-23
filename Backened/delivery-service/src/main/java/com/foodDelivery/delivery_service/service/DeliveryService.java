@@ -126,6 +126,8 @@ public class DeliveryService {
                 .status(DeliveryStatus.PENDING)
                 .dropoffAddress(event.getDeliveryAddress())
                 .specialInstructions(event.getSpecialInstructions())
+                .userEmail(event.getUserEmail())
+                .userName(event.getUserName())
                 .build();
         delivery=deliveryRepo.save(delivery);
         log.info("Delivery created: deliveryId={}, orderId={}", delivery.getDeliveryId(), event.getOrderId());
@@ -264,6 +266,8 @@ public class DeliveryService {
                 .distanceKm(delivery.getDistanceKm())
                 .actualDeliveryMins(delivery.getActualDeliveryMins())
                 .deliveredAt(now)
+                .userEmail(delivery.getUserEmail())
+                .userName(delivery.getUserName())
                 .build());
         return toDeliveryResponse(delivery);
 

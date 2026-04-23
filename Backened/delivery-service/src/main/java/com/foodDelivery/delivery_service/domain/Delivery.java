@@ -34,6 +34,13 @@ public class Delivery {
 
     @Column(name = "restaurant_name" , length = 200)
     private String restaurantName ;
+    
+    @Column(name = "user_email")
+    private String userEmail;
+    
+    @Column(name = "user_name")
+    private String userName;
+
     @Column(name = "driver_id", length = 36)
     private String driverId;
 

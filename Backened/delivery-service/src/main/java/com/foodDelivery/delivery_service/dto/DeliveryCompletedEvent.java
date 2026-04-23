@@ -21,9 +21,10 @@ public class DeliveryCompletedEvent {
     private String userId;
     private String restaurantId;
     private String driverId;
-    private BigDecimal distanceKm;
     private Integer actualDeliveryMins;
     private LocalDateTime deliveredAt;
+    private String userEmail;
+    private String userName;
 
 
 

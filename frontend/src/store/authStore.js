@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import api from "../api/axios";
+import { useDriverStore } from "./driverStore";
 
 export const useAuthStore = create(
   persist(
@@ -61,7 +62,12 @@ export const useAuthStore = create(
         return res.data;
       },
 
-      logout: () => set({ token: null, user: null }),
+      logout: () => {
+        set({ token: null, user: null });
+        if (useDriverStore.getState().clearProfile) {
+          useDriverStore.getState().clearProfile();
+        }
+      },
     }),
     {
       name: "foodrush-auth",
