@@ -17,19 +17,20 @@ public class NotificationEventListener {
 
     private final EmailService emailService;
 
-    // NOTE: change topic name to match what your order-service publishes
     @KafkaListener(topics = "order-placed", groupId = "notification-service-group")
     public void handleOrderPlaced(NotificationEvent event) {
         log.info("Received order-placed event: {}", event.getOrderId());
         if (event.getUserEmail() == null) {
-            log.warn("No userEmail in event, skipping");
+            log.warn("No userEmail in order-placed event, skipping");
             return;
         }
         Map<String, Object> vars = new HashMap<>();
         vars.put("userName", event.getUserName() != null ? event.getUserName() : "Customer");
         vars.put("orderId", event.getOrderId());
         vars.put("restaurantName", event.getRestaurantName());
-        vars.put("totalAmount", event.getTotalAmount());
+        vars.put("totalAmount", event.getTotalAmount() != null
+                ? event.getTotalAmount().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString()
+                : "0.00");
         emailService.sendHtmlEmail(
                 event.getUserEmail(),
                 "Order Confirmed - #" + event.getOrderId(),
@@ -39,18 +40,19 @@ public class NotificationEventListener {
         );
     }
 
-    // NOTE: change topic name to match what your payment-service publishes
     @KafkaListener(topics = "payment-completed", groupId = "notification-service-group")
     public void handlePaymentSuccess(NotificationEvent event) {
-        log.info("Received payment-completed event: {}", event.getOrderId());
+        log.info("Received payment-completed event: orderId={}", event.getOrderId());
         if (event.getUserEmail() == null) {
-            log.warn("No userEmail in event, skipping");
+            log.warn("No userEmail in payment-completed event, skipping");
             return;
         }
         Map<String, Object> vars = new HashMap<>();
         vars.put("userName", event.getUserName() != null ? event.getUserName() : "Customer");
         vars.put("orderId", event.getOrderId());
-        vars.put("totalAmount", event.getTotalAmount());
+        vars.put("totalAmount", event.getTotalAmount() != null
+                ? event.getTotalAmount().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString()
+                : "0.00");
         emailService.sendHtmlEmail(
                 event.getUserEmail(),
                 "Payment Received - #" + event.getOrderId(),

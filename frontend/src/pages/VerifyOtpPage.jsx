@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck, RotateCcw } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
 import api from "../api/axios";
+import { normaliseRole } from "../api/roles";
 
 const BG = "#FAF3E7";
 const BG_DEEP = "#F0E4CF";
@@ -64,9 +65,13 @@ export default function VerifyOtpPage() {
     if (code.length < 6) return toast.error("Enter the full 6-digit code");
     setLoading(true);
     try {
-      await verifyOtp(email, code);
+      const user = await verifyOtp(email, code);
       toast.success("Email verified! Welcome to FoodRush!");
-      navigate("/");
+      
+      const role = normaliseRole(user.role);
+      if (role === "DRIVER") navigate("/driver", { replace: true });
+      else if (role === "RESTAURANT_OWNER") navigate("/owner", { replace: true });
+      else navigate("/", { replace: true });
     } catch (err) {
       toast.error(err.response?.data?.message || "Invalid OTP");
     } finally {

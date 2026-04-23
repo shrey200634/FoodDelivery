@@ -57,7 +57,8 @@ export const useOrderStore = create((set) => ({
   },
 
   fetchOrder: async (orderId) => {
-    set({ loading: true });
+    // Clear stale order immediately so the detail page never flashes old data
+    set({ loading: true, currentOrder: null });
     try {
       const res = await api.get(`/orders/${orderId}`);
       const order = normalizeOrder(res.data);

@@ -18,6 +18,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Primary endpoint matching frontend socketService.js → SockJS('/api/ws')
+        // nginx strips nothing, so delivery-service receives /ws
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+
+        // Keep legacy endpoint for backward compatibility
         registry.addEndpoint("/ws/tracking")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();

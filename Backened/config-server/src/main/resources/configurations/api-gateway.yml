@@ -82,6 +82,8 @@ spring:
           uri: lb://DELIVERY-SERVICE
           predicates:
             - Path=/api/ws/**
+          filters:
+            - RewritePath=/api/ws/(?<segment>.*), /ws/$\{segment}
 
 eureka:
   client:

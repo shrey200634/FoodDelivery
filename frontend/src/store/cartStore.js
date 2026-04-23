@@ -86,7 +86,25 @@ export const useCartStore = create(
         }
         try {
           await api.put(`/cart/update/${menuItemId}`, null, { params: { quantity } });
-        } catch {}
+        } catch (err) {
+          // 404 = item not in Redis (cart expired or diverged from localStorage)
+          // Re-add the item so backend stays in sync
+          if (err.response?.status === 404) {
+            const item = get().items.find((i) => i.menuItemId === menuItemId);
+            if (item) {
+              try {
+                await api.post("/cart/add", {
+                  restaurantId: item.restaurantId,
+                  restaurantName: item.restaurantName,
+                  menuItemId: item.menuItemId,
+                  menuItemName: item.name,
+                  unitPrice: item.price,
+                  quantity,
+                });
+              } catch { /* non-fatal */ }
+            }
+          }
+        }
         set((s) => ({
           items: s.items.map((i) =>
             i.menuItemId === menuItemId ? { ...i, quantity } : i

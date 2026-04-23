@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
+import { normaliseRole } from "../api/roles";
 
 const BG = "#FAF3E7";
 const BG_DEEP = "#F0E4CF";
@@ -21,12 +22,6 @@ const SAFFRON = "#D98B3E";
 const PISTACHIO = "#6B7F4A";
 const CURRY = "#B5761A";
 
-function normaliseRole(role = "") {
-  const r = (role || "").toUpperCase();
-  if (r.includes("OWNER") || r.includes("RESTAURANT")) return "RESTAURANT_OWNER";
-  if (r.includes("DRIVER") || r.includes("DELIVERY"))   return "DRIVER";
-  return "CUSTOMER";
-}
 
 export default function LoginPage() {
   const navigate   = useNavigate();
@@ -49,8 +44,9 @@ export default function LoginPage() {
       toast.success(`Welcome back, ${user.name || "there"}! 🎉`);
 
       const role = normaliseRole(user.role);
-      // If redirected from a protected page, go back there
-      if (from && from !== "/login" && from !== "/register") {
+      // If redirected from a specific protected page, go back there
+      // But if it's just the root "/", let the role-based logic handle it
+      if (from && from !== "/" && from !== "/login" && from !== "/register") {
         navigate(from, { replace: true });
         return;
       }
