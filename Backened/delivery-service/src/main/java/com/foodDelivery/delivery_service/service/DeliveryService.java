@@ -326,6 +326,14 @@ public class DeliveryService {
         return toDeliveryResponse(delivery);
     }
 
+    // get all delivery history for a driver
+    public List<DeliveryResponse> getDeliveryHistoryForDriver(String driverId) {
+        return deliveryRepo.findByDriverIdOrderByCreatedAtDesc(driverId)
+                .stream()
+                .map(this::toDeliveryResponse)
+                .toList();
+    }
+
     //Retry matching for all pending delivery (Called By Scheduler)
 
     @Transactional

@@ -22,6 +22,8 @@ public class OrderPlacedEvent {
     private String deliveryAddress;
     private String specialInstructions;
     private LocalDateTime placedAt;
+    private String userEmail;
+    private String userName;
 
 
 }

@@ -73,7 +73,7 @@ public class DeliveryController {
                 .orElseThrow(() -> new IllegalStateException("Driver profile not found"))
                 .getDriverId();
 
-        List<DeliveryResponse> deliveries = deliveryService.getActiveDeliveryByUserId(driverId);
+        List<DeliveryResponse> deliveries = deliveryService.getDeliveryHistoryForDriver(driverId);
         return ResponseEntity.ok(Map.of(
                 "count", deliveries.size(),
                 "deliveries", deliveries
