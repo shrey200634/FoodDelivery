@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 5s # How often to pull data
+
+scrape_configs:
+  # API Gateway
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:8080'] 
+
+  # User Service (Added)
+  - job_name: 'user-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['user-service:8081'] # Ensure server.port=8085 in your Spring application.yml
+
+  # Restaurant Service
+  - job_name: 'restaurant-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['restaurant-service:8082']
+
+  # Order Service
+  - job_name: 'order-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['order-service:8083'] 
+
+  # Payment Service (Added)
+  - job_name: 'payment-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['payment-service:8085'] # Ensure server.port=8086 in your Spring application.yml
+
+  # Delivery Service
+  - job_name: 'delivery-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['delivery-service:8084']
+
+  # Notification Service
+  - job_name: 'notification-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['notification-service:8086']

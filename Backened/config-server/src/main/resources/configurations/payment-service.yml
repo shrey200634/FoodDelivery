@@ -40,3 +40,16 @@ payment:
   settlement:
     max-retries: 3
     platform-fee-percent: 5.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus"
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true

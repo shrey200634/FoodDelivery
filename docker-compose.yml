@@ -388,3 +388,34 @@ services:
       - "3000:80"
     networks:
       - foodrush-net
+
+  # ── Observability ─────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      # Map your local prometheus.yml to the container
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - foodrush-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      # Using 3001 externally because your frontend is already using 3000
+      - "3001:3000" 
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - foodrush-net
+
+
+  

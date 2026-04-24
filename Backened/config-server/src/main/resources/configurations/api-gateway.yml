@@ -95,8 +95,18 @@ eureka:
 jwt:
   secret: ${JWT_SECRET:default-secret-key-for-jwt-signing-must-be-at-least-256-bits-long}
 
+# ─── METRICS & MONITORING ──────────────────────────────
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: "health,info,gateway,prometheus"
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
