@@ -85,7 +85,8 @@ spring:
           predicates:
             - Path=/api/ws/**
           filters:
-            - RewritePath=/api/ws/(?<segment>.*), /ws/$\{segment}
+            - RewritePath=/api/ws/(?<segment>.*), /ws/$\{segment} 
+
 
 eureka:
   client:
