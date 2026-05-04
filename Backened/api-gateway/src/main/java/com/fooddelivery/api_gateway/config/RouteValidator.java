@@ -15,7 +15,9 @@ public class RouteValidator {
             "/api/v1/auth",
             "/eureka",
             "/actuator",
-            "/api/v1/restaurants"   // ← add this
+            "/api/v1/restaurants/search",
+            "/api/v1/restaurants/nearby",
+            "/api/v1/restaurants/top-rated"  // ← add this
 
     );
 
