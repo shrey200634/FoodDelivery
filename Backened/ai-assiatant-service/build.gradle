@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.14'
+	id 'org.springframework.boot' version '3.4.5'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -15,10 +15,14 @@ java {
 
 repositories {
 	mavenCentral()
+
+	// Required for Spring AI milestones if using snapshot/milestone builds
+	maven { url 'https://repo.spring.io/milestone' }
 }
 
 ext {
-	set('springCloudVersion', "2025.0.2")
+	set('springCloudVersion', "2024.0.1")
+	set('springAiVersion', "1.0.0")
 }
 
 dependencies {
@@ -29,32 +33,33 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
 	implementation 'org.springframework.kafka:spring-kafka'
+
+	// Spring AI
+	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+	implementation 'org.springframework.ai:spring-ai-core'   // <-- ADD THIS
+
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 	annotationProcessor 'org.projectlombok:lombok'
+	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
 	testCompileOnly 'org.projectlombok:lombok'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
-
-	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-	runtimeOnly    'io.jsonwebtoken:jjwt-impl:0.12.6'
-	runtimeOnly    'io.jsonwebtoken:jjwt-jackson:0.12.6'
-
-	implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
-	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
-
-
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-		mavenBom 'org.springframework.ai:spring-ai-bom:1.0.0'
-
+		mavenBom "org.springframework.ai:spring-ai-bom:1.0.0-M6"  // use milestone
 	}
 }
 
