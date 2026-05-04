@@ -48,8 +48,6 @@ public class JwtService {
         }
     }
 
-
-
     //Helper
     private String stripBearer(String token ){
         if (token == null ) return  "";
