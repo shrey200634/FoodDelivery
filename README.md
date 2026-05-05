@@ -28,11 +28,9 @@ FoodRush is a fully containerized, cloud-ready food delivery platform built with
 
 | Feature | Description | Technology |
 |---|---|---|
-| 🧠 **AI Order Prediction** | Suggests meals based on history, time of day, and AI inference | Google Gemini API |
-| 👥 **Group Orders & Live Bill Split** | Shared cart link; multiple users add items via WebSocket, auto-splits the bill | WebSockets (STOMP) + Redis Pub/Sub |
-| ⚡ **Dynamic Surge Pricing** | Delivery fee recalculated every 30s based on zone order velocity vs. driver density | Redis Counters + Kafka Streams |
+| 🤖 **AI Chat Assistant** | Interactive conversational assistant capable of placing orders, querying wallet, and finding restaurants via function calling | Spring AI + Google Gemini |
 | 📍 **Sub-Second Driver Tracking** | GPS coordinates fanned out to consumers in real-time, bypassing the DB entirely | WebSockets + Redis Geospatial |
-| 🔒 **Distributed Rate Limiting** | DDoS & spam protection via IP-level throttling at the gateway perimeter | Spring Cloud Gateway + Redis Lua |
+| 👥 **Role-Based Access Control** | Dedicated workflows and dashboards for Customers, Drivers, and Restaurant Owners | Spring Security + JWT |
 | 📊 **Full Observability** | JVM metrics, CPU, heap, HTTP latency per service — all live in Grafana | Prometheus + Grafana |
 | 💳 **SAGA Payment Choreography** | No central orchestrator; distributed transactions via Kafka events with compensating rollbacks | Apache Kafka |
 
@@ -60,6 +58,7 @@ graph TD
         GW -->|REST + WSS| OS(Order Service :8083)
         GW -->|REST + WSS| DL(Delivery Service :8084)
         GW -->|REST| PS(Payment Service :8085)
+        GW -->|REST| AI(AI Assistant Service :8087)
         NS(Notification Service :8086)
     end
 
@@ -71,6 +70,8 @@ graph TD
         PS --> DB5[(Payment DB)]
         OS --> RC[(Redis Cache)]
         DL --> RC
+        AI --> RC
+        AI -.->|Function Calling| EXT[Gemini API]
     end
 
     subgraph Kafka Event Bus
@@ -84,7 +85,7 @@ graph TD
     NS -->|SMTP| MAIL[Gmail]
 
     subgraph Observability
-        US & RS & OS & DL & PS & NS & GW -->|/actuator/prometheus| PROM(Prometheus :9090)
+        US & RS & OS & DL & PS & NS & AI & GW -->|/actuator/prometheus| PROM(Prometheus :9090)
         PROM --> GRF(Grafana :3001\nSpring Boot Dashboard)
     end
 ```
@@ -104,7 +105,8 @@ graph TD
 | **delivery-service** | 8084 | Driver management, GPS tracking, delivery lifecycle |
 | **payment-service** | 8085 | Wallet, fund locking, SAGA payment processing |
 | **notification-service** | 8086 | Kafka consumer — sends emails via SMTP on key events |
-| **prometheus** | 9090 | Scrapes `/actuator/prometheus` from all services every 5s |
+| **ai-assistant-service** | 8087 | Conversational agent using Gemini with function calling |
+| **prometheus** | 9090 | Scrapes `/actuator/prometheus` from all 8 services every 5s |
 | **grafana** | 3001 | Dashboards — JVM heap, CPU, uptime, HTTP metrics per service |
 
 ---
@@ -245,7 +247,7 @@ FoodRush ships with a **fully provisioned** monitoring stack. No manual setup re
 
 ### What's monitored
 
-Every Spring Boot service exposes `/actuator/prometheus`. Prometheus scrapes all 7 services every **5 seconds**. Grafana visualizes:
+Every Spring Boot service exposes `/actuator/prometheus`. Prometheus scrapes all 8 services every **5 seconds**. Grafana visualizes:
 
 | Metric | Description |
 |---|---|
@@ -277,9 +279,10 @@ graph LR
         E[delivery-service :8084]
         F[payment-service :8085]
         G[notification-service :8086]
+        H[ai-assistant-service :8087]
     end
 
-    A & B & C & D & E & F & G -->|/actuator/prometheus\nevery 5s| P(Prometheus :9090)
+    A & B & C & D & E & F & G & H -->|/actuator/prometheus\nevery 5s| P(Prometheus :9090)
     P -->|PromQL queries| GR(Grafana :3001)
     GR -->|Spring Boot 2.1\nSystem Monitor Dashboard| DEV[Developer]
 ```
@@ -356,6 +359,8 @@ All APIs are accessed via `http://localhost:8080/api/v1/...` with `Authorization
 | **Wallet** | POST | `/wallet/add-funds` | Top up wallet |
 | | GET | `/wallet/balance` | Get current balance |
 | | GET | `/transactions` | Paginated transaction history |
+| **AI Assistant** | POST | `/ai/chat` | Chat with the Gemini assistant |
+| | DELETE | `/ai/chat/history` | Clear your conversation history |
 
 ---
 
@@ -385,7 +390,7 @@ All APIs are accessed via `http://localhost:8080/api/v1/...` with `Authorization
 
 ## Quick Start — Docker (Recommended)
 
-> ✅ **This is the easiest way to run FoodRush.** One command starts everything — all 7 Spring Boot services, Kafka, MySQL, Redis, Prometheus, and Grafana. No Java or Node.js installation needed.
+> ✅ **This is the easiest way to run FoodRush.** One command starts everything — all 8 Spring Boot services, Kafka, MySQL, Redis, Prometheus, and Grafana. No Java or Node.js installation needed.
 
 ### Prerequisites
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
@@ -526,15 +531,16 @@ cd Backened/config-server && ./gradlew bootRun
 # Terminal 2 — Discovery second
 cd Backened/discovery-server && ./gradlew bootRun
 
-# Terminals 3-8 — Core services (can run in parallel)
+# Terminals 3-9 — Core services (can run in parallel)
 cd Backened/user-service        && ./gradlew bootRun
 cd Backened/restaurant-service  && ./gradlew bootRun
 cd Backened/order-service       && ./gradlew bootRun
 cd Backened/delivery-service    && ./gradlew bootRun
 cd Backened/payment-service     && ./gradlew bootRun
 cd Backened/notification-service && ./gradlew bootRun
+cd Backened/ai-assistant-service && ./gradlew bootRun
 
-# Terminal 9 — Gateway last
+# Terminal 10 — Gateway last
 cd Backened/api-gateway && ./gradlew bootRun
 ```
 
@@ -564,7 +570,8 @@ foodRush/
 │   ├── order-service/
 │   ├── payment-service/
 │   ├── restaurant-service/
-│   └── user-service/
+│   ├── user-service/
+│   └── ai-assistant-service/
 ├── frontend/                                     ← React 18 + Vite
 ├── grafana/
 │   └── provisioning/
