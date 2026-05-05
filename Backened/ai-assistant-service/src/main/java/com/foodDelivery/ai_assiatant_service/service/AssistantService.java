@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -90,9 +91,9 @@ public class AssistantService {
                     ? defaultConversationId()
                     : req.getConversationId();
 
-            // ── Build the full prompt: memory + new user message ──
-            // (system prompt is already set via chatClient.defaultSystem)
+            // ── Build the full prompt: system + memory + new user message ──
             List<Message> messages = new ArrayList<>();
+            messages.add(new SystemMessage(SYSTEM_PROMPT));
             messages.addAll(memory.get(conversationId));
             UserMessage userMsg = new UserMessage(req.getMessage());
             messages.add(userMsg);
@@ -141,4 +142,3 @@ public class AssistantService {
         return uid == null ? "anonymous-" + Instant.now().toEpochMilli() : "user:" + uid;
     }
 }
-
