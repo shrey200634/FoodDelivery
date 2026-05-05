@@ -34,4 +34,7 @@ public class ToolCallTracker {
                 .register(meterRegistry)
                 .increment();
     }
+    public List<String> getCalls() {
+        return List.copyOf(calls);
+    }
 }
