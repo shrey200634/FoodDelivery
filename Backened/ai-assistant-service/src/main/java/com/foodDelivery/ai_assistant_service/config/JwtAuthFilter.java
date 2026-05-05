@@ -1,4 +1,4 @@
-package com.foodDelivery.ai_assiatant_service.config;
+package com.foodDelivery.ai_assistant_service.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

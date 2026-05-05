@@ -1,4 +1,4 @@
-package com.foodDelivery.ai_assiatant_service.config;
+package com.foodDelivery.ai_assistant_service.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

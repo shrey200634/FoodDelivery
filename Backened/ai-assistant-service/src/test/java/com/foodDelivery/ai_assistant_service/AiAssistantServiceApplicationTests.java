@@ -1,10 +1,10 @@
-package com.foodDelivery.ai_assiatant_service;
+package com.foodDelivery.ai_assistant_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class AiAssiatantServiceApplicationTests {
+class AiAssistantServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

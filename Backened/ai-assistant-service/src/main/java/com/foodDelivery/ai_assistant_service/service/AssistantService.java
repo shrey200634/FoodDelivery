@@ -1,10 +1,10 @@
-package com.foodDelivery.ai_assiatant_service.service;
+package com.foodDelivery.ai_assistant_service.service;
 
-import com.foodDelivery.ai_assiatant_service.config.RequestContext;
-import com.foodDelivery.ai_assiatant_service.dto.ChatRequest;
-import com.foodDelivery.ai_assiatant_service.dto.ChatResponse;
-import com.foodDelivery.ai_assiatant_service.memory.RedisChatMemory;
-import com.foodDelivery.ai_assiatant_service.tools.*;
+import com.foodDelivery.ai_assistant_service.config.RequestContext;
+import com.foodDelivery.ai_assistant_service.dto.ChatRequest;
+import com.foodDelivery.ai_assistant_service.dto.ChatResponse;
+import com.foodDelivery.ai_assistant_service.memory.RedisChatMemory;
+import com.foodDelivery.ai_assistant_service.tools.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
@@ -91,10 +91,8 @@ public class AssistantService {
                     ? defaultConversationId()
                     : req.getConversationId();
 
-            // ── Build the full prompt: system + memory + new user message ──
-            List<Message> messages = new ArrayList<>();
-            messages.add(new SystemMessage(SYSTEM_PROMPT));
-            messages.addAll(memory.get(conversationId));
+            // ── Build the full prompt: memory + new user message ──
+            List<Message> messages = new ArrayList<>(memory.get(conversationId));
             UserMessage userMsg = new UserMessage(req.getMessage());
             messages.add(userMsg);
 

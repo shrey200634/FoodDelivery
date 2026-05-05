@@ -1,6 +1,6 @@
-package com.foodDelivery.ai_assiatant_service.clint;
+package com.foodDelivery.ai_assistant_service.client;
 
-import com.foodDelivery.ai_assiatant_service.config.RequestContext;
+import com.foodDelivery.ai_assistant_service.config.RequestContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;

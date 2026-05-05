@@ -1,4 +1,4 @@
-package com.foodDelivery.ai_assiatant_service.memory;
+package com.foodDelivery.ai_assistant_service.memory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
