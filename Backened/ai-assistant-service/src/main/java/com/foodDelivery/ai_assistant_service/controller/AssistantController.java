@@ -1,9 +1,9 @@
-package com.foodDelivery.ai_assiatant_service.controller;
+package com.foodDelivery.ai_assistant_service.controller;
 
-import com.foodDelivery.ai_assiatant_service.config.RequestContext;
-import com.foodDelivery.ai_assiatant_service.dto.ChatRequest;
-import com.foodDelivery.ai_assiatant_service.dto.ChatResponse;
-import com.foodDelivery.ai_assiatant_service.service.AssistantService;
+import com.foodDelivery.ai_assistant_service.config.RequestContext;
+import com.foodDelivery.ai_assistant_service.dto.ChatRequest;
+import com.foodDelivery.ai_assistant_service.dto.ChatResponse;
+import com.foodDelivery.ai_assistant_service.service.AssistantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

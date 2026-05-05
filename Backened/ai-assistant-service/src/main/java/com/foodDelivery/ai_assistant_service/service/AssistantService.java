@@ -1,16 +1,17 @@
-package com.foodDelivery.ai_assiatant_service.service;
+package com.foodDelivery.ai_assistant_service.service;
 
-import com.foodDelivery.ai_assiatant_service.config.RequestContext;
-import com.foodDelivery.ai_assiatant_service.dto.ChatRequest;
-import com.foodDelivery.ai_assiatant_service.dto.ChatResponse;
-import com.foodDelivery.ai_assiatant_service.memory.RedisChatMemory;
-import com.foodDelivery.ai_assiatant_service.tools.*;
+import com.foodDelivery.ai_assistant_service.config.RequestContext;
+import com.foodDelivery.ai_assistant_service.dto.ChatRequest;
+import com.foodDelivery.ai_assistant_service.dto.ChatResponse;
+import com.foodDelivery.ai_assistant_service.memory.RedisChatMemory;
+import com.foodDelivery.ai_assistant_service.tools.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -91,9 +92,7 @@ public class AssistantService {
                     : req.getConversationId();
 
             // ── Build the full prompt: memory + new user message ──
-            // (system prompt is already set via chatClient.defaultSystem)
-            List<Message> messages = new ArrayList<>();
-            messages.addAll(memory.get(conversationId));
+            List<Message> messages = new ArrayList<>(memory.get(conversationId));
             UserMessage userMsg = new UserMessage(req.getMessage());
             messages.add(userMsg);
 
@@ -141,4 +140,3 @@ public class AssistantService {
         return uid == null ? "anonymous-" + Instant.now().toEpochMilli() : "user:" + uid;
     }
 }
-

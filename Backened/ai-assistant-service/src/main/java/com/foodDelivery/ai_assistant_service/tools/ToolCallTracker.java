@@ -1,4 +1,4 @@
-package com.foodDelivery.ai_assiatant_service.tools;
+package com.foodDelivery.ai_assistant_service.tools;
 
 
 import io.micrometer.core.instrument.Counter;

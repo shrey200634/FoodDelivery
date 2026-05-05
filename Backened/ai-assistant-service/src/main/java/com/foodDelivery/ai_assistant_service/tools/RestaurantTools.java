@@ -1,6 +1,6 @@
-package com.foodDelivery.ai_assiatant_service.tools;
+package com.foodDelivery.ai_assistant_service.tools;
 
-import com.foodDelivery.ai_assiatant_service.clint.FoodRushClient;
+import com.foodDelivery.ai_assistant_service.client.FoodRushClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;

@@ -1,4 +1,4 @@
-package com.foodDelivery.ai_assiatant_service.dto;
+package com.foodDelivery.ai_assistant_service.dto;
 
 
 import jakarta.validation.constraints.NotBlank;
