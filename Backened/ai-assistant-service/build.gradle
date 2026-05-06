@@ -34,7 +34,7 @@ dependencies {
 	implementation 'org.springframework.kafka:spring-kafka'
 
 	// Spring AI
-	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

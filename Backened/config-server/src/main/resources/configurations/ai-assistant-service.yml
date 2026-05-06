@@ -23,13 +23,13 @@ spring:
 
 
   ai:
-    google:
-      genai:
-        api-key: ${GEMINI_API_KEY:}
-        chat:
-          options:
-            model:       ${GEMINI_MODEL:gemini-2.0-flash}
-            temperature: 0.4
+    openai:
+      api-key: ${GROK_API_KEY:-}
+      base-url: https://api.groq.com/openai
+      chat:
+        options:
+          model: ${GROK_MODEL:-llama-3.3-70b-versatile}
+          temperature: 0.4
 
 # ─── Eureka ──────────────────────────────────────────────────────────
 eureka:
