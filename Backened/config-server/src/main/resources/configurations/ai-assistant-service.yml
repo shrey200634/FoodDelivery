@@ -24,8 +24,8 @@ spring:
 
   ai:
     openai:
-      api-key: ${GROK_API_KEY}
-      base-url: https://api.groq.com
+      api-key: ${GROQ_API_KEY}
+      base-url: https://api.groq.com/openai
       chat:
         options:
           model: ${GROQ_MODEL:llama-3.3-70b-versatile}
