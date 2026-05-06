@@ -372,7 +372,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-default-secret-key-for-jwt-signing-must-be-at-least-256-bits-long}
       GATEWAY_URL: http://api-gateway:8080
       # ── Gemini (free API key from AI Studio) ──
-      GROQ_API_KEY: ${GROK_API_KEY:-}
+      GROQ_API_KEY: ${GROK_API_KEY}
       GROQ_MODEL: ${GROK_MODEL:-llama-3.3-70b-versatile}
     networks:
       - foodrush-net
