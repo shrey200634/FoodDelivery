@@ -260,6 +260,19 @@ Every Spring Boot service exposes `/actuator/prometheus`. Prometheus scrapes all
 | **JVM Thread Count** | Live, daemon, peak threads |
 | **GC Activity** | Garbage collection pause times |
 
+## Performance Benchmarks
+Tested with Apache JMeter on local Docker stack (8 microservices)
+
+| Concurrent Users | Throughput   | Avg Response | Error Rate |
+|-----------------|--------------|--------------|------------|
+| 100             | 32.5 req/s   | 9ms          | 0%         |
+| 500             | 91.6 req/s   | 7ms          | 0%         |
+| 1,000           | 152.3 req/s  | 12ms         | 0%         |
+| 2,000           | 227.4 req/s  | 11ms         | 0%         |
+| 5,000           | 313.0 req/s  | 3009ms       | 0%*        |
+
+*CPU-bound on local machine at 5000 users. Zero application errors throughout.
+
 ### Access
 
 | Tool | URL | Credentials |
