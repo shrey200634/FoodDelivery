@@ -15,12 +15,13 @@ FoodRush is a fully containerized, cloud-ready food delivery platform built with
 4. [Database Design](#database-design)
 5. [Event-Driven Workflows](#event-driven-workflows)
 6. [Observability Stack](#observability-stack)
-7. [Frontend Architecture](#frontend-architecture)
-8. [API Reference](#api-reference)
-9. [Kafka Topics](#kafka-topics)
-10. [Security Model](#security-model)
-11. [Quick Start — Docker](#quick-start--docker-recommended)
-12. [Manual Setup — Local Dev](#manual-setup--local-dev)
+7. [Performance Benchmarks](#performance-benchmarks)
+8. [Frontend Architecture](#frontend-architecture)
+9. [API Reference](#api-reference)
+10. [Kafka Topics](#kafka-topics)
+11. [Security Model](#security-model)
+12. [Quick Start — Docker](#quick-start--docker-recommended)
+13. [Manual Setup — Local Dev](#manual-setup--local-dev)
 
 ---
 
