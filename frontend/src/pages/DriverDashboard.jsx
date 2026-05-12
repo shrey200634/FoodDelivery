@@ -33,11 +33,13 @@ const SAFFRON    = "#D4882A";
 const PISTACHIO  = "#5A7040";
 
 const DELIVERY_STATUS = {
-  PENDING:     { label: "Pending",       color: "#6D28D9", bg: "#F5F3FF" },
-  ASSIGNED:    { label: "Assigned",      color: SAFFRON,   bg: "#FFFBEB" },
-  PICKED_UP:   { label: "Picked Up",     color: TC,        bg: `${TC}12` },
-  DELIVERED:   { label: "Delivered",     color: SUCCESS,   bg: "#ECFDF5" },
-  FAILED:      { label: "Failed",        color: "#DC2626", bg: "#FEF2F2" },
+  PENDING:         { label: "Pending",       color: "#6D28D9", bg: "#F5F3FF" },
+  DRIVER_ASSIGNED: { label: "Assigned",      color: SAFFRON,   bg: "#FFFBEB" },
+  PICKED_UP:       { label: "Picked Up",     color: TC,        bg: `${TC}12` },
+  IN_TRANSIT:      { label: "In Transit",    color: TC_SOFT,   bg: `${TC_SOFT}12` },
+  DELIVERED:       { label: "Delivered",     color: SUCCESS,   bg: "#ECFDF5" },
+  CANCELLED:       { label: "Cancelled",    color: "#DC2626", bg: "#FEF2F2" },
+  FAILED:          { label: "Failed",        color: "#DC2626", bg: "#FEF2F2" },
 };
 
 function MapFlyTo({ center }) {
@@ -399,8 +401,8 @@ function ActiveDeliveryPanel({ delivery, isOnline, actionLoading, onPickup, onCo
     );
   }
 
-  const status     = delivery.deliveryStatus || delivery.status || "ASSIGNED";
-  const statusMeta = DELIVERY_STATUS[status] || DELIVERY_STATUS.ASSIGNED;
+  const status     = delivery.deliveryStatus || delivery.status || "DRIVER_ASSIGNED";
+  const statusMeta = DELIVERY_STATUS[status] || DELIVERY_STATUS.DRIVER_ASSIGNED;
   const isPickedUp = status === "PICKED_UP";
 
   return (
@@ -441,7 +443,7 @@ function ActiveDeliveryPanel({ delivery, isOnline, actionLoading, onPickup, onCo
             icon="🏠"
             label="Deliver to"
             name={delivery.customerName || "Customer"}
-            address={delivery.deliveryAddress || delivery.deliverAddress || "Customer address"}
+            address={delivery.dropoffAddress || delivery.deliveryAddress || delivery.deliverAddress || "Customer address"}
             color={SAFFRON}
           />
         </div>

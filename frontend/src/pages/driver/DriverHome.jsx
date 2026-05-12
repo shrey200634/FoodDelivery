@@ -10,7 +10,6 @@ import {
 import { useDriverStore } from "../../store/driverStore";
 import { useAuthStore } from "../../store/authStore";
 import socketService from "../../services/socketService";
-import api from "../../api/axios";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -175,10 +174,6 @@ export default function DriverHome() {
     setActionBusy(true);
     try { 
       await confirmPickup(); 
-      if (activeDelivery?.orderId) {
-        api.patch(`/orders/${activeDelivery.orderId}/status`, { status: "PICKED_UP" })
-          .catch(err => console.warn("Order status sync failed:", err));
-      }
       toast.success("Pickup confirmed! Head to the customer 🏠"); 
     }
     catch (err) { toast.error(err?.response?.data?.message || "Failed to confirm pickup"); }
@@ -189,10 +184,6 @@ export default function DriverHome() {
     setActionBusy(true);
     try { 
       await completeDelivery(); 
-      if (activeDelivery?.orderId) {
-        api.patch(`/orders/${activeDelivery.orderId}/status`, { status: "DELIVERED" })
-          .catch(err => console.warn("Order status sync failed:", err));
-      }
       toast.success("Delivery complete! Great job 🎉"); 
     }
     catch (err) { toast.error(err?.response?.data?.message || "Failed to complete delivery"); }

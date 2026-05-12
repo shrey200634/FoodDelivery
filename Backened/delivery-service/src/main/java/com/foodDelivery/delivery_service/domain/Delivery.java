@@ -100,7 +100,8 @@ public class Delivery {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-
-
+    @Column(name = "retry_count")
+    @Builder.Default
+    private Integer retryCount = 0;
 
 }

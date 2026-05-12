@@ -59,6 +59,9 @@ public class DeliveryController {
                 .getDriverId();
 
         DeliveryResponse response = deliveryService.getActiveDeliveryForDriver(driverId);
+        if (response == null) {
+            return ResponseEntity.noContent().build();
+        }
         return ResponseEntity.ok(response);
     }
 

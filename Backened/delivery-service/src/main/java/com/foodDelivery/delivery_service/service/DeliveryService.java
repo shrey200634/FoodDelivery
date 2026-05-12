@@ -157,7 +157,16 @@ public class DeliveryService {
             return;
         }
         Driver driver = nearestDriver.get();
-        assignDriver(delivery, driver, restaurantLat, restaurantLng);
+        
+        // Only assign if driver has no active delivery
+        if (driver.getStatus() == DriverStatus.ONLINE && 
+            deliveryRepo.findActiveDeliveryByDriverId(driver.getDriverId()).isEmpty()) {
+            assignDriver(delivery, driver, restaurantLat, restaurantLng);
+        } else {
+            log.warn("Driver {} cannot be assigned (status={}, hasActiveDelivery={})", 
+                driver.getDriverId(), driver.getStatus(), 
+                deliveryRepo.findActiveDeliveryByDriverId(driver.getDriverId()).isPresent());
+        }
     }
 
     // Assign a specific driver to a delivery
@@ -167,7 +176,7 @@ public class DeliveryService {
         driverRepo.save(driver);
 
         double driverLat = driver.getCurrentLatitude()!=null ? driver.getCurrentLatitude().doubleValue():resLat;
-        double driverLng =driver.getCurrentLatitude()!=null?driver.getCurrentLongitude().doubleValue():resLng;
+        double driverLng =driver.getCurrentLongitude()!=null?driver.getCurrentLongitude().doubleValue():resLng;
         double customerLat = delivery.getDropoffLatitude() != null ? delivery.getDropoffLatitude().doubleValue() : resLat;
         double customerLng = delivery.getDropoffLongitude() != null ? delivery.getDropoffLongitude().doubleValue() : resLng;
 
@@ -319,11 +328,11 @@ public class DeliveryService {
                 .toList();
 
     }
-    //get delivery history for a driver
+    //get active delivery for a driver (returns null if none)
     public  DeliveryResponse getActiveDeliveryForDriver(String driverId ){
-        Delivery delivery = deliveryRepo.findActiveDeliveryByDriverId(driverId)
-                .orElseThrow(()-> new IllegalStateException("No active delivery for this driver"));
-        return toDeliveryResponse(delivery);
+        return deliveryRepo.findActiveDeliveryByDriverId(driverId)
+                .map(this::toDeliveryResponse)
+                .orElse(null);
     }
 
     // get all delivery history for a driver
@@ -340,6 +349,27 @@ public class DeliveryService {
     public void retryPendingDeliveries(){
         List<Delivery> pending = deliveryRepo.findPendingDeliveries();
         for (Delivery delivery : pending){
+            // Check expiry: cancel if pending for > 30 mins
+            if (delivery.getCreatedAt().isBefore(LocalDateTime.now().minus(30, ChronoUnit.MINUTES))) {
+                delivery.setStatus(DeliveryStatus.CANCELLED);
+                delivery.setCancelReason("No driver available - expired");
+                deliveryRepo.save(delivery);
+                continue;
+            }
+
+            // Check max retries
+            int currentRetries = delivery.getRetryCount() != null ? delivery.getRetryCount() : 0;
+            if (currentRetries >= 10) { // Max retries
+                delivery.setStatus(DeliveryStatus.CANCELLED);
+                delivery.setCancelReason("No driver available - max retries reached");
+                deliveryRepo.save(delivery);
+                continue;
+            }
+
+            // Increment retries
+            delivery.setRetryCount(currentRetries + 1);
+            deliveryRepo.save(delivery);
+
             log.info("Retrying driver assignment for delivery {}", delivery.getDeliveryId());
             attemptDriverAssignment(delivery);
 
@@ -365,6 +395,12 @@ public class DeliveryService {
     }
 
     private DeliveryResponse toDeliveryResponse(Delivery delivery) {
+        // Compute a simple delivery fee: base ₹30 + ₹10 per km
+        BigDecimal fee = new BigDecimal("30.00");
+        if (delivery.getDistanceKm() != null) {
+            fee = fee.add(delivery.getDistanceKm().multiply(new BigDecimal("10")));
+        }
+
         DeliveryResponse.DeliveryResponseBuilder builder = DeliveryResponse.builder()
                 .deliveryId(delivery.getDeliveryId())
                 .orderId(delivery.getOrderId())
@@ -375,9 +411,11 @@ public class DeliveryService {
                 .status(delivery.getStatus().name())
                 .pickupAddress(delivery.getPickupAddress())
                 .dropoffAddress(delivery.getDropoffAddress())
+                .deliveryAddress(delivery.getDropoffAddress())  // alias for frontend
                 .estimatedDeliveryMins(delivery.getEstimatedDeliveryMins())
                 .actualDeliveryMins(delivery.getActualDeliveryMins())
                 .distanceKm(delivery.getDistanceKm())
+                .deliveryFee(fee)
                 .assignedAt(delivery.getAssignedAt())
                 .pickedUpAt(delivery.getPickedUpAt())
                 .deliveredAt(delivery.getDeliveredAt())

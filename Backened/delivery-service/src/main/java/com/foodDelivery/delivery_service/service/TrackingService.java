@@ -59,9 +59,8 @@ public class TrackingService {
                 .build();
 
 
-        // push to webSocket topic = all subscriber for this order get the updte
-
-        String destination  = "/topic/tracking/" +delivery.getOrderId();
+        // push to webSocket topic — matches frontend socketService.subscribeToDriverLocation()
+        String destination  = "/topic/driver-location/" +delivery.getOrderId();
         messagingTemplate.convertAndSend(destination,update);
 
         log.debug("Broadcast location for order {}: lat={}, lng={}, eta={}mins",

@@ -26,9 +26,11 @@ public class DeliveryResponse {
     private String status ;
     private String pickupAddress;
     private String  dropoffAddress;
+    private String deliveryAddress;  // alias for dropoffAddress — used by frontend
     private Integer estimatedDeliveryMins;
     private Integer actualDeliveryMins;
     private BigDecimal distanceKm;
+    private BigDecimal deliveryFee;  // computed delivery fee — used by frontend for earnings
     private BigDecimal driverLatitude;
     private BigDecimal driverLongitude;
     private LocalDateTime assignedAt;
