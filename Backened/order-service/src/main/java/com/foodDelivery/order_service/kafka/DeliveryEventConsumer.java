@@ -45,9 +45,11 @@ public class DeliveryEventConsumer {
         log.info("Received delivery-picked-up for orderId={}", event.getOrderId());
         try {
             Order order = orderService.getOrderEntity(event.getOrderId());
-            order.transitionTo(Order.OrderStatus.PICKED_UP);
+            // Force-transition through intermediate states if needed
+            // This handles the case where restaurant hasn't moved the order to READY yet
+            forceTransitionTo(order, Order.OrderStatus.PICKED_UP);
             orderRepository.save(order);
-            log.info("Updated order {} status to PICKED_UP", event.getOrderId());
+            log.info("Updated order {} status to PICKED_UP (from {})", event.getOrderId(), order.getStatus());
         } catch (Exception ex) {
             log.error("Failed to process delivery-picked-up: {}", ex.getMessage());
         }
@@ -58,11 +60,54 @@ public class DeliveryEventConsumer {
         log.info("Received delivery-completed for orderId={}", event.getOrderId());
         try {
             Order order = orderService.getOrderEntity(event.getOrderId());
-            order.transitionTo(Order.OrderStatus.DELIVERED);
+            // Force-transition through intermediate states if needed
+            forceTransitionTo(order, Order.OrderStatus.DELIVERED);
             orderRepository.save(order);
             log.info("Updated order {} status to DELIVERED", event.getOrderId());
         } catch (Exception ex) {
             log.error("Failed to process delivery-completed: {}", ex.getMessage());
         }
     }
+
+    /**
+     * Force-transition an order through intermediate states to reach the target status.
+     * This is needed because delivery events can arrive before restaurant status updates.
+     * e.g. if order is CONFIRMED and we get PICKED_UP, we go: CONFIRMED→PREPARING→READY→PICKED_UP
+     */
+    private void forceTransitionTo(Order order, Order.OrderStatus target) {
+        // Define the ordered state progression
+        Order.OrderStatus[] progression = {
+            Order.OrderStatus.CREATED,
+            Order.OrderStatus.CONFIRMED,
+            Order.OrderStatus.PREPARING,
+            Order.OrderStatus.READY,
+            Order.OrderStatus.PICKED_UP,
+            Order.OrderStatus.DELIVERED,
+            Order.OrderStatus.COMPLETED
+        };
+
+        // Already at or past target — nothing to do
+        if (order.getStatus() == target) return;
+
+        // Find current and target index
+        int currentIdx = -1, targetIdx = -1;
+        for (int i = 0; i < progression.length; i++) {
+            if (progression[i] == order.getStatus()) currentIdx = i;
+            if (progression[i] == target) targetIdx = i;
+        }
+
+        if (currentIdx == -1 || targetIdx == -1 || currentIdx >= targetIdx) {
+            log.warn("Cannot force-transition order {} from {} to {} — skipping",
+                    order.getOrderId(), order.getStatus(), target);
+            return;
+        }
+
+        // Walk through each intermediate state
+        for (int i = currentIdx + 1; i <= targetIdx; i++) {
+            log.debug("Force-transitioning order {} from {} → {}",
+                    order.getOrderId(), order.getStatus(), progression[i]);
+            order.transitionTo(progression[i]);
+        }
+    }
 }
+

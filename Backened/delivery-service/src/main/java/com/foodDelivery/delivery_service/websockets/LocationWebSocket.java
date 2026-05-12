@@ -15,9 +15,10 @@ public class LocationWebSocket {
     private final DriverMatchingService driverMatchingService;
     private final TrackingService trackingService;
 
-    // driver send location update visa webSockets stomp
+    // driver send location update via webSockets stomp
+    // matches frontend socketService.sendDriverLocation() → "/app/driver-location"
 
-    @MessageMapping("/location/update")
+    @MessageMapping("/driver-location")
     public void updateDriverLocation(LocationPayload payload){
         log.debug("Location update: driverId={}, lat={}, lng={}",
                 payload.getDriverId(),payload.getLatitude(),payload.getLongitude());
